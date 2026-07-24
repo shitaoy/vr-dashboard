@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金华高铁基础设施段管VR全景可视化大屏</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- 加载层 -->
+<div class="loading-overlay" id="loading-overlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">大屏加载中...</div>
+</div>
+
+<!-- 大屏自适应容器 -->
+<div id="screen-wrapper">
+<div id="dashboard">
+
+    <!-- ===== 顶部标题栏 ===== -->
+    <header class="header">
+        <div class="header-side">
+            <span class="header-decoration"></span>
+            <span class="label">数据更新</span>
+            <span class="value" id="header-date">--</span>
+        </div>
+        <div class="header-title">金华高铁基础设施段管VR全景可视化大屏</div>
+        <div class="header-side right">
+            <span class="label">&#128337;</span>
+            <span class="value" id="header-time">--:--:--</span>
+            <span class="header-decoration"></span>
+        </div>
+    </header>
+
+    <!-- ===== 主体三栏 ===== -->
+    <div class="main-body">
+
+        <!-- ===== 左栏 ===== -->
+        <div class="col-left">
+
+            <!-- 数据总览 -->
+            <div class="panel">
+                <div class="panel-corner-tr"></div>
+                <div class="panel-corner-bl"></div>
+                <div class="panel-scanline"></div>
+                <div class="panel-header">
+                    <span class="panel-title">数据总览</span>
+                    <span class="panel-badge">REAL-TIME</span>
+                </div>
+                <div class="panel-body">
+                    <div class="stat-grid">
+                        <div class="stat-cell">
+                            <div class="stat-icon">&#127748;</div>
+                            <div class="stat-num" id="stat-total">0</div>
+                            <div class="stat-label">VR全景数</div>
+                        </div>
+                        <div class="stat-cell amber">
+                            <div class="stat-icon">&#128679;</div>
+                            <div class="stat-num" id="stat-tunnels">0</div>
+                            <div class="stat-label">隧道总数</div>
+                        </div>
+                        <div class="stat-cell green">
+                            <div class="stat-icon">&#128206;</div>
+                            <div class="stat-num" id="stat-mileage">0</div>
+                            <div class="stat-label">覆盖里程(km)</div>
+                        </div>
+                        <div class="stat-cell purple">
+                            <div class="stat-icon">&#128642;</div>
+                            <div class="stat-num" id="stat-lines">0</div>
+                            <div class="stat-label">线路数量</div>
+                        </div>
+                    </div>
+
+                    <!-- 各线路VR作品数量 -->
+                    <div class="line-stats" id="line-stats"></div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ===== 中央栏 ===== -->
+        <div class="col-center">
+
+            <!-- 地图面板 -->
+            <div class="panel center-map-panel">
+                <div class="panel-corner-tr"></div>
+                <div class="panel-corner-bl"></div>
+                <div class="panel-scanline"></div>
+                <div class="panel-header">
+                    <span class="panel-title">浙江省高铁VR全景分布图</span>
+                    <span class="panel-badge">RAILWAY MAP</span>
+                </div>
+                <div class="panel-body map-container" style="padding:0;">
+                    <div id="map-chart"></div>
+
+                    <!-- 地图浮层统计 -->
+                    <div class="map-overlay">
+                        <div class="map-stat-card">
+                            <div class="stat-label">VR全景总数</div>
+                            <div class="stat-value" id="map-stat-total">0<span class="unit">个</span></div>
+                        </div>
+                        <div class="map-stat-card">
+                            <div class="stat-label">隧道数量</div>
+                            <div class="stat-value" id="map-stat-tunnels">0<span class="unit">座</span></div>
+                        </div>
+                    </div>
+
+                    <!-- 搜索框 -->
+                    <div class="search-box" id="search-box">
+                        <div class="search-input-wrap">
+                            <span class="search-icon">&#128269;</span>
+                            <input type="text" class="search-input" id="search-input"
+                                   placeholder="搜索隧道名称 / 编号 / 里程 / 年份..."
+                                   autocomplete="off">
+                            <button class="search-clear" id="search-clear" title="清除">&times;</button>
+                        </div>
+                        <div class="search-dropdown" id="search-dropdown"></div>
+                    </div>
+
+                    <!-- 线路选择器 -->
+                    <div class="city-selector line-selector"></div>
+
+                    <!-- 年份选择器 -->
+                    <div class="city-selector year-selector"></div>
+
+                    <!-- 图例 -->
+                    <div class="map-legend">
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#00d4ff;box-shadow:0 0 6px #00d4ff;"></span>
+                            <span>进口</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#f59e0b;box-shadow:0 0 6px #f59e0b;"></span>
+                            <span>出口</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#10b981;box-shadow:0 0 6px #10b981;"></span>
+                            <span>涵洞</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:#a855f7;box-shadow:0 0 6px #a855f7;"></span>
+                            <span>中心点</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-dot" style="background:rgba(0,212,255,0.3);border-radius:0;width:14px;height:3px;"></span>
+                            <span>铁路路线</span>
+                        </div>
+                    </div>
+
+                    <!-- 筛选提示 -->
+                    <div class="filter-hint" id="filter-hint"></div>
+                </div>
+            </div>
+
+            <!-- 底部VR预览卡片 -->
+            <div class="panel center-preview-panel">
+                <div class="panel-corner-tr"></div>
+                <div class="panel-corner-bl"></div>
+                <div class="panel-scanline"></div>
+                <div class="panel-header">
+                    <span class="panel-title">隧道VR全景预览</span>
+                    <span class="panel-badge">TUNNEL VR</span>
+                </div>
+                <div class="panel-body" style="padding:8px;">
+                    <div class="preview-scroll" id="preview-scroll"></div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ===== 右栏 ===== -->
+        <div class="col-right">
+
+            <!-- 工点类型长度分布饼图 -->
+            <div class="panel">
+                <div class="panel-corner-tr"></div>
+                <div class="panel-corner-bl"></div>
+                <div class="panel-scanline"></div>
+                <div class="panel-header">
+                    <span class="panel-title">工点类型长度分布</span>
+                    <span class="panel-badge">WORK TYPE</span>
+                </div>
+                <div class="panel-body">
+                    <div class="chart-box" id="chart-pie"></div>
+                </div>
+            </div>
+
+            <!-- 隧道VR全景列表 -->
+            <div class="panel">
+                <div class="panel-corner-tr"></div>
+                <div class="panel-corner-bl"></div>
+                <div class="panel-scanline"></div>
+                <div class="panel-header">
+                    <span class="panel-title">隧道VR全景列表</span>
+                    <span class="panel-badge">VR LIST</span>
+                </div>
+                <div class="panel-body" style="padding:10px;">
+                    <div class="work-list" id="work-list"></div>
+                </div>
+            </div>
+
+        </div>
+
+    </div><!-- /main-body -->
+
+</div><!-- /dashboard -->
+</div><!-- /screen-wrapper -->
+
+<!-- ===== VR预览弹窗 ===== -->
+<div class="modal-overlay" id="modal-overlay">
+    <div class="modal-box">
+        <div class="modal-header">
+            <div class="modal-title">
+                <span id="modal-title-text">隧道VR全景</span>
+                <span class="city-badge" id="modal-city-badge">线路</span>
+            </div>
+            <button class="modal-close" id="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body" id="modal-body"></div>
+        <div class="modal-footer" id="modal-footer">
+            <div class="meta-group">
+                <div class="meta-item">隧道编号：<span class="val" data-meta="tunnelNum">--</span></div>
+                <div class="meta-item">位置：<span class="val" data-meta="position">--</span></div>
+                <div class="meta-item">里程：<span class="val" data-meta="mileage">--</span></div>
+                <div class="meta-item">高程：<span class="val" data-meta="elevation">--</span></div>
+                <div class="meta-item">坐标：<span class="val" data-meta="coords">--</span></div>
+                <div class="meta-item">拍摄年份：<span class="val" data-meta="year" style="color:#10b981;">--</span></div>
+            </div>
+            <a class="open-link" id="modal-open-link" href="#" target="_blank">在新窗口打开 &#8599;</a>
+        </div>
+    </div>
+</div>
+
+<!-- ===== ECharts CDN（主+备） ===== -->
+<script src="https://cdn.bootcdn.net/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+<script>
+    // 主CDN加载失败时自动切换备用CDN
+    if (typeof echarts === "undefined") {
+        document.write('<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"><\/script>');
+    }
+</script>
+
+<!-- ===== 数据 & 逻辑 ===== -->
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
