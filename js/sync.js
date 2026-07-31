@@ -400,9 +400,11 @@ window.VR_SYNC = (function () {
                 var idx = f2Val2 !== null ? f2Val2 : 0;
                 value = idx < textValues.length ? textValues[idx] : "";
             } else if (ctype2 === 6) {
-                // 超链接单元格（1-based 索引）
-                if (f2Val2 !== null && hyperlinkValues.length > 0 && f2Val2 >= 1 && f2Val2 <= hyperlinkValues.length) {
-                    value = hyperlinkValues[f2Val2 - 1];
+                // 超链接单元格（0-based 索引）
+                // hyperlinkValues 列表可能包含未被引用的条目（如已删除的超链接），
+                // f2Val 直接作为 0-based 索引使用
+                if (f2Val2 !== null && hyperlinkValues.length > 0 && f2Val2 >= 0 && f2Val2 < hyperlinkValues.length) {
+                    value = hyperlinkValues[f2Val2];
                 } else {
                     value = "";
                 }

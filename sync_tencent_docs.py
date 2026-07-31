@@ -213,9 +213,11 @@ def reconstruct_table(text_values, num_values, cells, hyperlink_values=None):
                 value = ""
 
         elif ctype == 6:
-            # 超链接单元格：f2.1 是 hyperlink_values 的1-based索引
-            if f2_val is not None and hyperlink_values and 1 <= f2_val <= len(hyperlink_values):
-                value = hyperlink_values[f2_val - 1]
+            # 超链接单元格：f2.1 是 hyperlink_values 的 0-based 索引
+            # 注意：hyperlink_values 列表可能包含未被单元格引用的条目（如已删除的超链接），
+            # 因此 f2_val 直接作为 0-based 索引使用，不减 1
+            if f2_val is not None and hyperlink_values and 0 <= f2_val < len(hyperlink_values):
+                value = hyperlink_values[f2_val]
             else:
                 value = ""
 
