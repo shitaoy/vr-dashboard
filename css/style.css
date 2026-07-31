@@ -307,8 +307,8 @@ html, body {
 }
 
 /* ===== 左栏：数据总览 + 维修车间统计 ===== */
-.col-left .panel:nth-child(1) { flex: 1; min-height: 0; }
-.col-left .panel.workshop-panel { flex: 0 0 260px; }
+.col-left .panel:nth-child(1) { flex: 0 0 380px; min-height: 0; }
+.col-left .panel.workshop-panel { flex: 1; min-height: 0; }
 
 /* ===== 右栏：各面板高度分配 ===== */
 .col-right .panel:nth-child(1) { flex: 0 0 280px; }
@@ -877,15 +877,15 @@ html, body {
 .stat-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    gap: 8px;
 }
 
 /* ===== 各线路VR作品数量 ===== */
 .line-stats {
-    margin-top: 12px;
+    margin-top: 8px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
 }
 
 /* ===== 维修车间统计 ===== */
@@ -993,7 +993,7 @@ html, body {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 10px;
+    padding: 4px 10px;
     background: rgba(6, 12, 31, 0.4);
     border: 1px solid rgba(0, 212, 255, 0.1);
     border-radius: 3px;
@@ -1027,7 +1027,7 @@ html, body {
 
 .line-stat-bar-wrap {
     flex: 1;
-    height: 16px;
+    height: 14px;
     background: rgba(0, 212, 255, 0.05);
     border-radius: 2px;
     overflow: hidden;
@@ -1065,7 +1065,7 @@ html, body {
     background: rgba(6, 12, 31, 0.4);
     border: 1px solid rgba(0, 212, 255, 0.12);
     border-radius: 4px;
-    padding: 16px 14px;
+    padding: 10px 12px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -1084,12 +1084,12 @@ html, body {
 }
 
 .stat-cell .stat-icon {
-    font-size: 18px;
-    margin-bottom: 4px;
+    font-size: 16px;
+    margin-bottom: 2px;
 }
 
 .stat-cell .stat-num {
-    font-size: 26px;
+    font-size: 24px;
     font-weight: 700;
     font-family: var(--font-mono);
     color: var(--cyan);
@@ -1098,9 +1098,9 @@ html, body {
 }
 
 .stat-cell .stat-label {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-dim);
-    margin-top: 4px;
+    margin-top: 2px;
 }
 
 .stat-cell.amber .stat-num { color: var(--amber); text-shadow: 0 0 8px rgba(245, 158, 11, 0.3); }
