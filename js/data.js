@@ -4,9 +4,9 @@
  * ============================================================
  *  数据来源：腾讯文档在线表格（自动同步）
  *  文档链接：https://docs.qq.com/sheet/DYk1EZUJBQmR0dmJa
- *  同步时间：2026-07-24 15:38:42
- *  作品总数：214 条
- *  隧道总数：94 座
+ *  同步时间：2026-07-31 09:23:17
+ *  作品总数：275 条
+ *  隧道总数：95 座
  * ============================================================
  */
 
@@ -474,7 +474,12 @@ const VR_DATA = {
     {
         "num": 0,
         "name": "大圆里隧道",
-        "length": 0
+        "length": 265437
+    },
+    {
+        "num": 0,
+        "name": "普安寺隧道",
+        "length": 22218
     },
     {
         "num": 0,
@@ -559,7 +564,7 @@ const VR_DATA = {
     }
 },
 
-  // ===== VR全景作品列表（共 214 条） =====
+  // ===== VR全景作品列表（共 275 条） =====
   works: [
     {id: 1, line: "杭温铁路", tunnelNum: 2, tunnelName: "石尖", position: "进口", mileage: "K7+341", lng: 119.779341, lat: 29.780224, elevation: 253.1, workshop: "横店维修车间", year: "2026", url: "https://www.720yun.com/t/13akuy17df7?scene_id=129907469"},
     {id: 2, line: "杭温铁路", tunnelNum: 2, tunnelName: "石尖", position: "出口", mileage: "K12+480", lng: 119.806775, lat: 29.74008, elevation: 318.6, workshop: "横店维修车间", year: "2026", url: "https://www.720yun.com/t/13akuy17df7?scene_id=129907470"},
@@ -775,5 +780,66 @@ const VR_DATA = {
     {id: 212, line: "衢九线", tunnelNum: 0, tunnelName: "樟树坞隧道", position: "进口", mileage: "/", lng: 118.218098, lat: 29.044982, elevation: 316.0, workshop: "常山综合维修车间", year: "2026", url: "https://www.720yun.com/t/feakuy17drh?scene_id=129908005"},
     {id: 213, line: "衢九线", tunnelNum: 0, tunnelName: "炉新二号隧道", position: "出口", mileage: "/", lng: 118.32496, lat: 29.015584, elevation: 261.7, workshop: "常山综合维修车间", year: "2026", url: "https://www.720yun.com/t/feakuy17drh?scene_id=129908006"},
     {id: 214, line: "沪昆线", tunnelNum: 0, tunnelName: "大圆里隧道", position: "进口", mileage: "K234+763", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: "https://www.720yun.com/t/e64jtskOzu9?scene_id=13976725"},
+    {id: 215, line: "沪昆线", tunnelNum: 0, tunnelName: "大圆里隧道", position: "出口", mileage: "K234+926", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 216, line: "沪昆线", tunnelNum: 0, tunnelName: "吕家一号隧道", position: "进口", mileage: "K240+646", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 217, line: "沪昆线", tunnelNum: 0, tunnelName: "吕家一号隧道", position: "出口", mileage: "K240+780", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 218, line: "沪昆线", tunnelNum: 0, tunnelName: "吕家二号隧道", position: "进口", mileage: "K241+032", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 219, line: "沪昆线", tunnelNum: 0, tunnelName: "吕家二号隧道", position: "出口", mileage: "K241+336", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 220, line: "沪昆线", tunnelNum: 0, tunnelName: "大禹隧道", position: "进口", mileage: "K241+791", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 221, line: "沪昆线", tunnelNum: 0, tunnelName: "大禹隧道", position: "出口", mileage: "K241+993", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 222, line: "沪昆线", tunnelNum: 0, tunnelName: "K254.8高路堑", position: "", mileage: "K254+800", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 223, line: "沪昆线", tunnelNum: 0, tunnelName: "K256.95高路堑", position: "", mileage: "K256+950", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 224, line: "沪昆线", tunnelNum: 0, tunnelName: "诸暨一号隧道", position: "进口", mileage: "K272+503", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 225, line: "沪昆线", tunnelNum: 0, tunnelName: "诸暨一号隧道", position: "出口", mileage: "K272+659", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 226, line: "沪昆线", tunnelNum: 0, tunnelName: "诸暨二号隧道", position: "进口", mileage: "K273+152", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 227, line: "沪昆线", tunnelNum: 0, tunnelName: "诸暨二号隧道", position: "出口", mileage: "K273+389", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 228, line: "沪昆线", tunnelNum: 0, tunnelName: "郑家坞一号隧道", position: "进口", mileage: "K294+837", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 229, line: "沪昆线", tunnelNum: 0, tunnelName: "郑家坞一号隧道", position: "出口", mileage: "K294+977", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 230, line: "沪昆线", tunnelNum: 0, tunnelName: "郑家坞二号隧道", position: "进口", mileage: "K295+391", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 231, line: "沪昆线", tunnelNum: 0, tunnelName: "郑家坞二号隧道", position: "出口", mileage: "K295+791", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 232, line: "沪昆线", tunnelNum: 0, tunnelName: "龙王山隧道", position: "进口", mileage: "K295+916", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 233, line: "沪昆线", tunnelNum: 0, tunnelName: "龙王山隧道", position: "出口", mileage: "K296+433", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 234, line: "沪昆线", tunnelNum: 0, tunnelName: "蟠狮岭隧道", position: "进口", mileage: "K296+987", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 235, line: "沪昆线", tunnelNum: 0, tunnelName: "蟠狮岭隧道", position: "出口", mileage: "K298+822", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 236, line: "沪昆线", tunnelNum: 0, tunnelName: "上金隧道", position: "进口", mileage: "K300+228", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 237, line: "沪昆线", tunnelNum: 0, tunnelName: "上金隧道", position: "出口", mileage: "K304+680", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 238, line: "沪昆线", tunnelNum: 0, tunnelName: "K306高路堑", position: "", mileage: "K306+530", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 239, line: "沪昆线", tunnelNum: 0, tunnelName: "陈宅一号隧道", position: "进口", mileage: "K309+649", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 240, line: "沪昆线", tunnelNum: 0, tunnelName: "陈宅一号隧道", position: "出口", mileage: "K309+834", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 241, line: "沪昆线", tunnelNum: 0, tunnelName: "陈宅二号隧道", position: "进口", mileage: "K310+245", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 242, line: "沪昆线", tunnelNum: 0, tunnelName: "陈宅二号隧道", position: "出口", mileage: "K310+367", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 243, line: "沪昆线", tunnelNum: 0, tunnelName: "义乌左线隧道", position: "进口", mileage: "K312+498", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 244, line: "沪昆线", tunnelNum: 0, tunnelName: "义乌左线隧道", position: "出口", mileage: "K312+090", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 245, line: "沪昆线", tunnelNum: 0, tunnelName: "义乌右线隧道", position: "进口", mileage: "K312+719", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 246, line: "沪昆线", tunnelNum: 0, tunnelName: "义乌右线隧道", position: "出口", mileage: "K316+311", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 247, line: "沪昆线", tunnelNum: 0, tunnelName: "K358.36高路堑", position: "", mileage: "K358+360", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 248, line: "沪昆线", tunnelNum: 0, tunnelName: "K404高路堑", position: "", mileage: "K404+000", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 249, line: "沪昆线", tunnelNum: 0, tunnelName: "K417.15高路堑", position: "", mileage: "K417+150", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 250, line: "沪昆线", tunnelNum: 0, tunnelName: "K464.015高路堑", position: "", mileage: "K464+015", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 251, line: "沪昆线", tunnelNum: 0, tunnelName: "K472.45高路堑", position: "", mileage: "K472+450", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 252, line: "沪昆线", tunnelNum: 0, tunnelName: "江山隧道", position: "进口", mileage: "K475+334", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 253, line: "沪昆线", tunnelNum: 0, tunnelName: "江山隧道", position: "出口", mileage: "K475+911", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 254, line: "沪昆线", tunnelNum: 0, tunnelName: "K477.17高路堑", position: "", mileage: "K477+170", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 255, line: "沪昆线", tunnelNum: 0, tunnelName: "K479.08高路堑", position: "", mileage: "K479+080", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 256, line: "沪昆线", tunnelNum: 0, tunnelName: "K485高路堑", position: "", mileage: "K485+000", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 257, line: "沪昆线", tunnelNum: 0, tunnelName: "K500.2高路堑", position: "", mileage: "K500+200", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 258, line: "沪昆高铁", tunnelNum: 0, tunnelName: "普安寺隧道", position: "进口", mileage: "K180+089", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 259, line: "沪昆高铁", tunnelNum: 0, tunnelName: "普安寺隧道", position: "出口", mileage: "K181+249", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 260, line: "沪昆高铁", tunnelNum: 0, tunnelName: "赵坞隧道", position: "进口", mileage: "K180+147", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 261, line: "沪昆高铁", tunnelNum: 0, tunnelName: "赵坞隧道", position: "出口", mileage: "K181+256", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 262, line: "沪昆高铁", tunnelNum: 0, tunnelName: "青化山隧道", position: "进口", mileage: "K184+315", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 263, line: "沪昆高铁", tunnelNum: 0, tunnelName: "青化山隧道", position: "出口", mileage: "K189+221", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 264, line: "沪昆高铁", tunnelNum: 0, tunnelName: "沈家山隧道", position: "进口", mileage: "K189+406", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 265, line: "沪昆高铁", tunnelNum: 0, tunnelName: "沈家山隧道", position: "出口", mileage: "K190+090", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 266, line: "沪昆高铁", tunnelNum: 0, tunnelName: "邵家塔隧道", position: "进口", mileage: "K194+259", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 267, line: "沪昆高铁", tunnelNum: 0, tunnelName: "邵家塔隧道", position: "出口", mileage: "K194+497", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 268, line: "沪昆高铁", tunnelNum: 0, tunnelName: "下定隧道", position: "进口", mileage: "K196+331", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 269, line: "沪昆高铁", tunnelNum: 0, tunnelName: "下定隧道", position: "出口", mileage: "K197+183", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 270, line: "沪昆高铁", tunnelNum: 0, tunnelName: "上曹坞明洞", position: "进口", mileage: "K201+101", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 271, line: "沪昆高铁", tunnelNum: 0, tunnelName: "上曹坞明洞", position: "出口", mileage: "K201+216", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 272, line: "沪昆高铁", tunnelNum: 0, tunnelName: "上曹坞隧道", position: "进口", mileage: "K201+464", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 273, line: "沪昆高铁", tunnelNum: 0, tunnelName: "上曹坞隧道", position: "出口", mileage: "K201+682", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 274, line: "沪昆高铁", tunnelNum: 0, tunnelName: "姚家尖隧道", position: "进口", mileage: "K201+881", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
+    {id: 275, line: "沪昆高铁", tunnelNum: 0, tunnelName: "姚家尖隧道", position: "出口", mileage: "K202+307", lng: 0.0, lat: 0.0, elevation: 0.0, workshop: "金华综合维修车间", year: "2018", url: ""},
   ]
 };
