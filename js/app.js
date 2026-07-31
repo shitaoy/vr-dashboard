@@ -762,27 +762,43 @@
         var footer = document.getElementById("modal-footer");
         var openLink = document.getElementById("modal-open-link");
 
-        titleEl.textContent = work.tunnelName + "（" + work.position + "）VR全景";
+        titleEl.textContent = work.tunnelName + (work.position ? "（" + work.position + "）" : "") + " VR全景";
         lineBadge.textContent = work.line + " · " + work.year;
-        openLink.href = work.url;
-        openLink.target = "_blank";
 
         // 底部信息
         footer.querySelector('[data-meta="tunnelNum"]').textContent = work.tunnelNum > 0 ? (work.tunnelNum + "号") : "无编号";
-        footer.querySelector('[data-meta="position"]').textContent = work.position;
+        footer.querySelector('[data-meta="position"]').textContent = work.position || "—";
         footer.querySelector('[data-meta="mileage"]').textContent = work.mileage || "无";
         footer.querySelector('[data-meta="elevation"]').textContent = work.elevation + " m";
         footer.querySelector('[data-meta="coords"]').textContent = (work.lng && work.lat) ? (work.lng.toFixed(6) + ", " + work.lat.toFixed(6)) : "无坐标";
         var yearMeta = footer.querySelector('[data-meta="year"]');
         if (yearMeta) yearMeta.textContent = work.year;
 
-        // 构建720云iframe
+        // 检查URL是否为空
+        if (!work.url || work.url.trim() === "") {
+            openLink.href = "#";
+            openLink.style.display = "none";
+            body.innerHTML =
+                '<div class="modal-placeholder" style="display:flex;">' +
+                    '<div class="icon">&#128679;</div>' +
+                    '<div class="text" style="font-size:16px;color:#ef4444;">该工点暂无VR全景链接</div>' +
+                    '<div class="url-hint" style="color:#64748b;margin-top:8px;">请在腾讯文档中为该条目补充720云链接</div>' +
+                '</div>';
+            overlay.classList.add("active");
+            return;
+        }
+
+        openLink.href = work.url;
+        openLink.target = "_blank";
+        openLink.style.display = "";
+
+        // 构建720云iframe（移除sandbox限制，720云是可信站点需要完整JS执行环境）
         body.innerHTML =
             '<iframe class="modal-iframe" src="' + work.url + '" ' +
             'frameborder="0" ' +
             'allowfullscreen="allowfullscreen" ' +
-            'sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox" ' +
-            'referrerpolicy="no-referrer"></iframe>' +
+            'allow="fullscreen; gyroscope; accelerometer; magnetometer; autoplay; clipboard-read; clipboard-write" ' +
+            'referrerpolicy="no-referrer-when-downgrade"></iframe>' +
             '<div class="modal-placeholder" style="display:none;">' +
                 '<div class="icon">&#127748;</div>' +
                 '<div class="text">VR全景加载中，若长时间未显示请点击下方按钮在新窗口打开</div>' +
@@ -797,13 +813,13 @@
             loaded = true;
         });
 
-        // 8秒后检测
+        // 12秒后检测是否加载成功
         setTimeout(function () {
             if (!loaded) {
                 iframe.style.display = "none";
                 placeholder.style.display = "flex";
             }
-        }, 8000);
+        }, 12000);
 
         overlay.classList.add("active");
     }
