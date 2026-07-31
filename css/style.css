@@ -138,6 +138,67 @@ html, body {
     font-size: 16px;
 }
 
+/* ===== 数据更新按钮 ===== */
+.sync-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 16px;
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(0, 212, 255, 0.05));
+    border: 1.5px solid rgba(0, 212, 255, 0.5);
+    border-radius: 4px;
+    color: var(--cyan);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: "Microsoft YaHei", sans-serif;
+    cursor: pointer;
+    transition: all 0.25s;
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+    outline: none;
+}
+
+.sync-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.3), rgba(0, 212, 255, 0.1));
+    border-color: var(--cyan);
+    box-shadow: 0 0 16px rgba(0, 212, 255, 0.45);
+    transform: translateY(-1px);
+}
+
+.sync-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.sync-btn:disabled {
+    cursor: wait;
+    opacity: 0.8;
+}
+
+.sync-btn .sync-icon {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.sync-btn.syncing .sync-icon {
+    animation: sync-spin 1s linear infinite;
+}
+
+.sync-btn.sync-done {
+    border-color: #10b981;
+    color: #10b981;
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.4);
+}
+
+.sync-btn.sync-error {
+    border-color: #ef4444;
+    color: #ef4444;
+    box-shadow: 0 0 16px rgba(239, 68, 68, 0.4);
+}
+
+@keyframes sync-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
 .header-decoration {
     display: inline-block;
     width: 6px;

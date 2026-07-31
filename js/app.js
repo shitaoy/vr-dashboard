@@ -916,6 +916,97 @@
             if (STATE.echartsMap) STATE.echartsMap.resize();
             if (STATE.echartsPie) STATE.echartsPie.resize();
         });
+
+        // ===== 数据更新按钮 =====
+        var syncBtn = document.getElementById("sync-btn");
+        var syncIcon = document.getElementById("sync-icon");
+        var syncLabel = document.getElementById("sync-label");
+        var syncRunning = false;
+
+        syncBtn.addEventListener("click", async function () {
+            if (syncRunning) return;
+            if (!window.VR_SYNC) {
+                alert("同步模块未加载");
+                return;
+            }
+
+            syncRunning = true;
+            syncBtn.disabled = true;
+            syncBtn.classList.add("syncing");
+            syncIcon.innerHTML = "&#8987;"; // 沙漏
+            syncLabel.textContent = "同步中...";
+
+            try {
+                var result = await VR_SYNC.sync(function (msg, step) {
+                    console.log("[同步] 步骤" + step + ": " + msg);
+                    syncLabel.textContent = msg;
+                });
+
+                // 更新 VR_DATA
+                VR_DATA.works = result.works;
+                VR_DATA.tunnels = result.tunnels;
+                VR_DATA.workTypes = result.workTypes;
+                VR_DATA.lines = result.lines;
+
+                // 更新 STATE
+                STATE.allWorks = VR_DATA.works;
+                STATE.currentLine = null;
+                STATE.currentYear = null;
+                STATE.currentWorkshop = null;
+
+                // 更新线路颜色映射
+                STATE.lineColors = {};
+                VR_DATA.lines.forEach(function (l) {
+                    STATE.lineColors[l.name] = l.color;
+                });
+
+                // 重新渲染所有模块
+                renderStats();
+                renderLineStats();
+                renderWorkshopStats();
+                refreshAll();
+
+                // 更新头部日期显示同步时间
+                var dateEl = document.getElementById("header-date");
+                var now = result.syncTime;
+                var h = String(now.getHours()).padStart(2, "0");
+                var m = String(now.getMinutes()).padStart(2, "0");
+                var weekDays = ["日", "一", "二", "三", "四", "五", "六"];
+                dateEl.textContent = now.getFullYear() + "-" +
+                    String(now.getMonth() + 1).padStart(2, "0") + "-" +
+                    String(now.getDate()).padStart(2, "0") +
+                    " 已更新 " + h + ":" + m;
+
+                syncIcon.innerHTML = "&#9989;"; // 勾号
+                syncLabel.textContent = "已更新 " + result.works.length + "条";
+                syncBtn.classList.add("sync-done");
+
+                setTimeout(function () {
+                    syncBtn.classList.remove("syncing");
+                    syncBtn.classList.remove("sync-done");
+                    syncIcon.innerHTML = "&#128260;"; // 恢复刷新图标
+                    syncLabel.textContent = "数据更新";
+                }, 3000);
+
+            } catch (e) {
+                console.error("[同步] 失败:", e);
+                syncIcon.innerHTML = "&#9888;"; // 警告
+                syncLabel.textContent = "同步失败";
+                syncBtn.classList.add("sync-error");
+
+                setTimeout(function () {
+                    syncBtn.classList.remove("syncing");
+                    syncBtn.classList.remove("sync-error");
+                    syncIcon.innerHTML = "&#128260;";
+                    syncLabel.textContent = "数据更新";
+                }, 3000);
+
+                alert("数据同步失败: " + e.message + "\n\n请检查网络连接后重试。");
+            } finally {
+                syncRunning = false;
+                syncBtn.disabled = false;
+            }
+        });
     }
 
     // ===== 搜索功能 =====
