@@ -307,7 +307,7 @@ html, body {
 }
 
 /* ===== 左栏：数据总览 + 维修车间统计 ===== */
-.col-left .panel:nth-child(1) { flex: 0 0 460px; min-height: 0; }
+.col-left .panel:nth-child(1) { flex: 0 0 560px; min-height: 0; }
 .col-left .panel.workshop-panel { flex: 1; min-height: 0; }
 
 /* 数据总览面板body：flex列布局，stat-grid固定，line-stats可滚动 */
