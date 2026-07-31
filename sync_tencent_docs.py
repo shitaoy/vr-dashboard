@@ -146,13 +146,29 @@ def decode_protobuf_data(api_data):
         except Exception:
             num_values.append(0.0)
 
+    # 提取超链接值（ctype=6 的单元格使用）
+    # sheet_data["5"]["2"] 是超链接列表，每项的 URL 在 ["3"]["3"]["1"] (bytes)
+    hyperlink_values = []
+    if "2" in sheet_data["5"] and isinstance(sheet_data["5"]["2"], list):
+        for item in sheet_data["5"]["2"]:
+            try:
+                link_data = item.get("3", {})
+                url_obj = link_data.get("3", {})
+                url_bytes = url_obj.get("1", b"")
+                if isinstance(url_bytes, bytes):
+                    hyperlink_values.append(url_bytes.decode("utf-8", errors="replace"))
+                else:
+                    hyperlink_values.append(str(url_bytes))
+            except Exception:
+                hyperlink_values.append("")
+
     # 提取单元格位置
     cells = sheet_data["6"]
 
-    return text_values, num_values, cells
+    return text_values, num_values, cells, hyperlink_values
 
 
-def reconstruct_table(text_values, num_values, cells):
+def reconstruct_table(text_values, num_values, cells, hyperlink_values=None):
     """根据单元格位置信息重建完整表格"""
 
     # 找到数字索引的偏移量
@@ -193,6 +209,13 @@ def reconstruct_table(text_values, num_values, cells):
             idx = f2_val if f2_val is not None else 0
             if idx < len(text_values):
                 value = text_values[idx]
+            else:
+                value = ""
+
+        elif ctype == 6:
+            # 超链接单元格：f2.1 是 hyperlink_values 的1-based索引
+            if f2_val is not None and hyperlink_values and 1 <= f2_val <= len(hyperlink_values):
+                value = hyperlink_values[f2_val - 1]
             else:
                 value = ""
 
@@ -576,14 +599,15 @@ def main():
 
     # 2. 解码 protobuf
     print("[2/6] 解码 protobuf 数据...")
-    text_values, num_values, cells = decode_protobuf_data(api_data)
+    text_values, num_values, cells, hyperlink_values = decode_protobuf_data(api_data)
     print(f"      ✓ 文本值: {len(text_values)} 个")
     print(f"      ✓ 数字值: {len(num_values)} 个")
+    print(f"      ✓ 超链接值: {len(hyperlink_values)} 个")
     print(f"      ✓ 单元格: {len(cells)} 个")
 
     # 3. 重建表格
     print("[3/6] 重建表格结构...")
-    rows = reconstruct_table(text_values, num_values, cells)
+    rows = reconstruct_table(text_values, num_values, cells, hyperlink_values)
     print(f"      ✓ 表格: {len(rows)} 行 × {NUM_COLS} 列")
     print(f"      ✓ 数据行（不含表头）: {len(rows) - 1} 行")
 
