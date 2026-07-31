@@ -1001,7 +1001,12 @@
                     syncLabel.textContent = "数据更新";
                 }, 3000);
 
-                alert("数据同步失败: " + e.message + "\n\n请检查网络连接后重试。");
+                var errMsg = e.message;
+                var hint = "\n\n请检查网络连接后重试。";
+                if (errMsg.indexOf("代理") >= 0 || errMsg.indexOf("CORS") >= 0 || errMsg.indexOf("Referer") >= 0) {
+                    hint = "\n\n原因：腾讯文档API需要服务器端代理才能访问。\n解决方案：\n1. 部署 worker/proxy.js 到 Cloudflare Worker（免费，2分钟）\n2. 将 Worker 地址填入 js/sync.js 的 PROXY_URL 变量\n3. 当前数据仍由后台每日6点自动同步更新";
+                }
+                alert("数据同步失败: " + errMsg + hint);
             } finally {
                 syncRunning = false;
                 syncBtn.disabled = false;

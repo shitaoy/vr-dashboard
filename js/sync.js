@@ -16,6 +16,10 @@ window.VR_SYNC = (function () {
     var API_BASE = "https://docs.qq.com/dop-api/opendoc?id=" + DOC_ID;
     var WORK_TYPE_TAB_ID = "dv5mdr";
 
+    // Cloudflare Worker 代理地址（部署后替换为你的 Worker URL）
+    // 部署方法见 worker/proxy.js 文件头部说明
+    var PROXY_URL = ""; // 例如: "https://vr-proxy.xxx.workers.dev/?url="
+
     var NUM_COLS = 10;
     var DIRECT_INT_COLS = { 1: true };
     var INDEXED_NUM_COLS = { 4: true, 5: true, 6: true, 8: true };
@@ -195,22 +199,33 @@ window.VR_SYNC = (function () {
         throw new Error("无法解压数据：浏览器不支持 DecompressionStream 且 pako 未加载");
     }
 
-    // ===== 数据获取（含 CORS 代理回退） =====
+    // ===== 数据获取（通过 Cloudflare Worker 代理） =====
 
     async function fetchWithFallback(url) {
-        // 1. 直接请求
-        try {
-            var resp = await fetch(url, {
-                headers: {
-                    "Accept": "application/json, text/plain, */*"
-                }
-            });
-            if (resp.ok) return await resp.json();
-        } catch (e) {
-            console.log("[sync] 直接请求失败，尝试 CORS 代理...");
+        // 1. 如果配置了 Cloudflare Worker 代理，直接使用
+        if (PROXY_URL) {
+            try {
+                var resp = await fetch(PROXY_URL + encodeURIComponent(url), {
+                    headers: { "Accept": "application/json, text/plain, */*" }
+                });
+                if (resp.ok) return await resp.json();
+                throw new Error("代理返回 " + resp.status);
+            } catch (e) {
+                throw new Error("代理请求失败: " + e.message);
+            }
         }
 
-        // 2. CORS 代理回退
+        // 2. 未配置代理 — 尝试直接请求（大概率因CORS失败）
+        try {
+            var resp2 = await fetch(url, {
+                headers: { "Accept": "application/json, text/plain, */*" }
+            });
+            if (resp2.ok) return await resp2.json();
+        } catch (e) {
+            // CORS 失败，预期之中
+        }
+
+        // 3. 尝试公共 CORS 代理（不稳定，作为最后手段）
         var proxies = [
             function (u) { return "https://corsproxy.io/?url=" + encodeURIComponent(u); },
             function (u) { return "https://api.allorigins.win/raw?url=" + encodeURIComponent(u); }
@@ -218,14 +233,14 @@ window.VR_SYNC = (function () {
 
         for (var i = 0; i < proxies.length; i++) {
             try {
-                resp = await fetch(proxies[i](url));
-                if (resp.ok) return await resp.json();
+                resp2 = await fetch(proxies[i](url));
+                if (resp2.ok) return await resp2.json();
             } catch (e) {
                 console.log("[sync] 代理 " + (i + 1) + " 失败: " + e.message);
             }
         }
 
-        throw new Error("所有获取方式均失败，请检查网络连接");
+        throw new Error("数据同步需要配置代理。腾讯文档API要求Referer头，浏览器无法直接访问。请联系管理员部署 worker/proxy.js 到 Cloudflare Worker，并将地址填入 sync.js 的 PROXY_URL 变量。当前数据仍可通过后台自动同步任务更新。");
     }
 
     async function fetchSheetData(tabId) {
