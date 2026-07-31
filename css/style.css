@@ -307,8 +307,38 @@ html, body {
 }
 
 /* ===== 左栏：数据总览 + 维修车间统计 ===== */
-.col-left .panel:nth-child(1) { flex: 0 0 380px; min-height: 0; }
+.col-left .panel:nth-child(1) { flex: 0 0 460px; min-height: 0; }
 .col-left .panel.workshop-panel { flex: 1; min-height: 0; }
+
+/* 数据总览面板body：flex列布局，stat-grid固定，line-stats可滚动 */
+.col-left .panel:nth-child(1) > .panel-body {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.col-left .panel:nth-child(1) > .panel-body > .stat-grid {
+    flex-shrink: 0;
+}
+.col-left .panel:nth-child(1) > .panel-body > .line-stats {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    padding-right: 6px;
+}
+.col-left .panel:nth-child(1) > .panel-body > .line-stats::-webkit-scrollbar {
+    width: 6px;
+}
+.col-left .panel:nth-child(1) > .panel-body > .line-stats::-webkit-scrollbar-track {
+    background: rgba(0, 212, 255, 0.05);
+    border-radius: 3px;
+}
+.col-left .panel:nth-child(1) > .panel-body > .line-stats::-webkit-scrollbar-thumb {
+    background: rgba(0, 212, 255, 0.35);
+    border-radius: 3px;
+}
+.col-left .panel:nth-child(1) > .panel-body > .line-stats::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 212, 255, 0.55);
+}
 
 /* ===== 右栏：各面板高度分配 ===== */
 .col-right .panel:nth-child(1) { flex: 0 0 280px; }
