@@ -12,6 +12,7 @@
     const STATE = {
         currentLine: null,          // 当前选中的线路（null=全部）
         currentYear: null,          // 当前选中的年份（null=全部）
+        currentWorkshop: null,      // 当前选中的维修车间（null=全部）
         echartsMap: null,
         echartsPie: null,
         allWorks: VR_DATA.works,
@@ -73,11 +74,12 @@
         requestAnimationFrame(update);
     }
 
-    // 获取筛选后的作品（线路 + 年份双重筛选）
+    // 获取筛选后的作品（线路 + 年份 + 维修车间三重筛选）
     function getFilteredWorks() {
         return STATE.allWorks.filter(function (w) {
             if (STATE.currentLine && w.line !== STATE.currentLine) return false;
             if (STATE.currentYear && w.year !== STATE.currentYear) return false;
+            if (STATE.currentWorkshop && w.workshop !== STATE.currentWorkshop) return false;
             return true;
         });
     }
@@ -225,6 +227,69 @@
                         }
                     });
                 }
+                refreshAll();
+            });
+        });
+    }
+
+    // ===== 维修车间统计 =====
+    function renderWorkshopStats() {
+        var container = document.getElementById("workshop-stats");
+        if (!container) return;
+
+        var works = STATE.allWorks;
+
+        // 按维修车间统计作品数
+        var wsCounts = {};
+        works.forEach(function (w) {
+            var ws = w.workshop || "未知";
+            wsCounts[ws] = (wsCounts[ws] || 0) + 1;
+        });
+
+        // 转为数组并按数量降序排列
+        var workshops = Object.keys(wsCounts).map(function (name) {
+            return { name: name, count: wsCounts[name] };
+        }).sort(function (a, b) { return b.count - a.count; });
+
+        var total = works.length;
+        var maxCount = workshops.length > 0 ? workshops[0].count : 0;
+
+        // 维修车间配色
+        var wsColors = ["#00d4ff", "#f59e0b", "#10b981", "#a855f7", "#ef4444", "#3b82f6"];
+
+        var html = '';
+        workshops.forEach(function (ws, i) {
+            var color = wsColors[i % wsColors.length];
+            var percent = maxCount > 0 ? (ws.count / maxCount * 100) : 0;
+            var pct = total > 0 ? ((ws.count / total * 100).toFixed(1)) : 0;
+            var isActive = STATE.currentWorkshop === ws.name;
+            html += '<div class="workshop-stat-row' + (isActive ? " active" : "") + '" data-workshop="' + ws.name + '">' +
+                '<span class="workshop-stat-icon" style="color:' + color + ';">&#128736;</span>' +
+                '<span class="workshop-stat-name">' + ws.name + '</span>' +
+                '<div class="workshop-stat-bar-wrap">' +
+                    '<div class="workshop-stat-bar" style="width:0%;background:linear-gradient(90deg,' + color + 'aa,' + color + ');box-shadow:0 0 8px ' + color + '40;" data-target="' + percent + '"></div>' +
+                '</div>' +
+                '<span class="workshop-stat-count" style="color:' + color + ';">' + ws.count + '</span>' +
+                '<span class="workshop-stat-pct">' + pct + '%</span>' +
+            '</div>';
+        });
+
+        container.innerHTML = html;
+
+        // 动画填充进度条
+        setTimeout(function () {
+            var bars = container.querySelectorAll(".workshop-stat-bar");
+            bars.forEach(function (bar) {
+                bar.style.width = bar.getAttribute("data-target") + "%";
+            });
+        }, 100);
+
+        // 点击行 → 筛选该车间
+        var rows = container.querySelectorAll(".workshop-stat-row");
+        rows.forEach(function (row) {
+            row.addEventListener("click", function () {
+                var wsName = this.getAttribute("data-workshop");
+                STATE.currentWorkshop = (STATE.currentWorkshop === wsName) ? null : wsName;
                 refreshAll();
             });
         });
@@ -730,6 +795,7 @@
     function refreshAll() {
         renderLineSelector();
         renderYearSelector();
+        renderWorkshopStats();
         renderMap();
         initPieChart();
         renderTunnelList();
@@ -742,6 +808,7 @@
         var parts = [];
         if (STATE.currentLine) parts.push(STATE.currentLine);
         if (STATE.currentYear) parts.push(STATE.currentYear + "年");
+        if (STATE.currentWorkshop) parts.push(STATE.currentWorkshop);
         if (parts.length > 0) {
             hint.textContent = "当前筛选：" + parts.join(" + ") + "（点击「全部」取消）";
             hint.classList.add("show");
@@ -1107,6 +1174,7 @@
             startClock();
             renderStats();
             renderLineStats();
+            renderWorkshopStats();
             renderLineSelector();
             renderYearSelector();
             await initMap();
