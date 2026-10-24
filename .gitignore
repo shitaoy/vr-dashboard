@@ -1,0 +1,7 @@
+.workbuddy/
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
+杭温铁路隧道口设备排查情况.xls
+更新脚本.txt
