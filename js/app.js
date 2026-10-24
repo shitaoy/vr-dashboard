@@ -12,11 +12,12 @@
     const STATE = {
         currentLine: null,          // 当前选中的线路（null=全部）
         currentYear: null,          // 当前选中的年份（null=全部）
-        currentWorkshop: null,      // 当前选中的维修车间（null=全部）
         echartsMap: null,
         echartsPie: null,
         allWorks: VR_DATA.works,
-        lineColors: {}              // 线路名 -> 颜色
+        lineColors: {},             // 线路名 -> 颜色
+        mapZoom: 1.15,              // 当前地图缩放级别
+        currentDeviceWork: null     // 设备抽屉当前展示的隧道口
     };
 
     // 初始化线路颜色映射
@@ -74,12 +75,11 @@
         requestAnimationFrame(update);
     }
 
-    // 获取筛选后的作品（线路 + 年份 + 维修车间三重筛选）
+    // 获取筛选后的作品（线路 + 年份双重筛选）
     function getFilteredWorks() {
         return STATE.allWorks.filter(function (w) {
             if (STATE.currentLine && w.line !== STATE.currentLine) return false;
             if (STATE.currentYear && w.year !== STATE.currentYear) return false;
-            if (STATE.currentWorkshop && w.workshop !== STATE.currentWorkshop) return false;
             return true;
         });
     }
@@ -232,69 +232,6 @@
         });
     }
 
-    // ===== 维修车间统计 =====
-    function renderWorkshopStats() {
-        var container = document.getElementById("workshop-stats");
-        if (!container) return;
-
-        var works = STATE.allWorks;
-
-        // 按维修车间统计作品数
-        var wsCounts = {};
-        works.forEach(function (w) {
-            var ws = w.workshop || "未知";
-            wsCounts[ws] = (wsCounts[ws] || 0) + 1;
-        });
-
-        // 转为数组并按数量降序排列
-        var workshops = Object.keys(wsCounts).map(function (name) {
-            return { name: name, count: wsCounts[name] };
-        }).sort(function (a, b) { return b.count - a.count; });
-
-        var total = works.length;
-        var maxCount = workshops.length > 0 ? workshops[0].count : 0;
-
-        // 维修车间配色
-        var wsColors = ["#00d4ff", "#f59e0b", "#10b981", "#a855f7", "#ef4444", "#3b82f6"];
-
-        var html = '';
-        workshops.forEach(function (ws, i) {
-            var color = wsColors[i % wsColors.length];
-            var percent = maxCount > 0 ? (ws.count / maxCount * 100) : 0;
-            var pct = total > 0 ? ((ws.count / total * 100).toFixed(1)) : 0;
-            var isActive = STATE.currentWorkshop === ws.name;
-            html += '<div class="workshop-stat-row' + (isActive ? " active" : "") + '" data-workshop="' + ws.name + '">' +
-                '<span class="workshop-stat-icon" style="color:' + color + ';">&#128736;</span>' +
-                '<span class="workshop-stat-name">' + ws.name + '</span>' +
-                '<div class="workshop-stat-bar-wrap">' +
-                    '<div class="workshop-stat-bar" style="width:0%;background:linear-gradient(90deg,' + color + 'aa,' + color + ');box-shadow:0 0 8px ' + color + '40;" data-target="' + percent + '"></div>' +
-                '</div>' +
-                '<span class="workshop-stat-count" style="color:' + color + ';">' + ws.count + '</span>' +
-                '<span class="workshop-stat-pct">' + pct + '%</span>' +
-            '</div>';
-        });
-
-        container.innerHTML = html;
-
-        // 动画填充进度条
-        setTimeout(function () {
-            var bars = container.querySelectorAll(".workshop-stat-bar");
-            bars.forEach(function (bar) {
-                bar.style.width = bar.getAttribute("data-target") + "%";
-            });
-        }, 100);
-
-        // 点击行 → 筛选该车间
-        var rows = container.querySelectorAll(".workshop-stat-row");
-        rows.forEach(function (row) {
-            row.addEventListener("click", function () {
-                var wsName = this.getAttribute("data-workshop");
-                STATE.currentWorkshop = (STATE.currentWorkshop === wsName) ? null : wsName;
-                refreshAll();
-            });
-        });
-    }
-
     // ===== 浙江省地图 =====
     async function initMap() {
         var chartDom = document.getElementById("map-chart");
@@ -405,8 +342,9 @@
             },
             geo: {
                 map: "zhejiang",
-                roam: false,
-                zoom: 1.15,
+                roam: true,
+                scaleLimit: { min: 0.7, max: 25 },
+                zoom: STATE.mapZoom,
                 center: [120.3, 29.0],
                 label: {
                     show: true,
@@ -475,6 +413,14 @@
 
         STATE.echartsMap.setOption(option, true);
 
+        // 跟踪滚轮/拖拽缩放，保持缩放级别状态同步
+        STATE.echartsMap.off("geoRoam");
+        STATE.echartsMap.on("geoRoam", function (e) {
+            if (e.zoom && e.zoom !== 1) {
+                STATE.mapZoom = Math.max(0.7, Math.min(25, STATE.mapZoom * e.zoom));
+            }
+        });
+
         // 点击事件
         STATE.echartsMap.off("click");
         STATE.echartsMap.on("click", function (params) {
@@ -483,6 +429,25 @@
                 openVRModal(work);
             }
         });
+    }
+
+    // ===== 地图缩放控制 =====
+    function setMapZoom(target) {
+        if (!STATE.echartsMap) return;
+        STATE.mapZoom = Math.max(0.7, Math.min(25, target));
+        // 局部合并更新 geo 缩放级别（不重置其他配置）
+        STATE.echartsMap.setOption({
+            geo: { zoom: STATE.mapZoom, center: [120.3, 29.0] }
+        });
+    }
+
+    function bindMapZoomControls() {
+        var inBtn = document.getElementById("map-zoom-in");
+        var outBtn = document.getElementById("map-zoom-out");
+        var resetBtn = document.getElementById("map-zoom-reset");
+        if (inBtn) inBtn.addEventListener("click", function () { setMapZoom(STATE.mapZoom * 1.6); });
+        if (outBtn) outBtn.addEventListener("click", function () { setMapZoom(STATE.mapZoom / 1.6); });
+        if (resetBtn) resetBtn.addEventListener("click", function () { setMapZoom(1.15); });
     }
 
     // ===== 工点类型长度分布饼图 =====
@@ -638,6 +603,8 @@
             var posColor = getPositionColor(w.position);
             var lineColor = getLineColor(w.line);
             var numLabel = w.tunnelNum > 0 ? (w.tunnelNum + "#") : "?";
+            var hasDev = !!w.device;
+            var statusColor = hasDev ? "#10b981" : "#64748b";
             return '<div class="work-item" data-id="' + w.id + '">' +
                 '<div class="work-rank" style="color:' + posColor + ';border:1px solid ' + posColor + '40;background:' + posColor + '15;font-size:11px;">' +
                     numLabel + '</div>' +
@@ -651,8 +618,8 @@
                     '</div>' +
                 '</div>' +
                 '<div class="work-views">' +
-                    '<div class="num" style="color:' + posColor + ';font-size:12px;">' + w.position + '</div>' +
-                    '<div class="label">' + w.year + '</div>' +
+                    '<div class="num" style="color:' + statusColor + ';font-size:12px;">' + (hasDev ? "已录入" : "未录入") + '</div>' +
+                    '<div class="label">设备数据</div>' +
                 '</div>' +
             '</div>';
         }).join("");
@@ -661,7 +628,7 @@
             el.addEventListener("click", function () {
                 var id = parseInt(this.dataset.id);
                 var work = STATE.allWorks.find(function (w) { return w.id === id; });
-                if (work) openVRModal(work);
+                if (work) openDeviceDrawer(work);
             });
         });
     }
@@ -795,7 +762,6 @@
     function refreshAll() {
         renderLineSelector();
         renderYearSelector();
-        renderWorkshopStats();
         renderMap();
         initPieChart();
         renderTunnelList();
@@ -808,7 +774,6 @@
         var parts = [];
         if (STATE.currentLine) parts.push(STATE.currentLine);
         if (STATE.currentYear) parts.push(STATE.currentYear + "年");
-        if (STATE.currentWorkshop) parts.push(STATE.currentWorkshop);
         if (parts.length > 0) {
             hint.textContent = "当前筛选：" + parts.join(" + ") + "（点击「全部」取消）";
             hint.classList.add("show");
@@ -820,6 +785,99 @@
         }
     }
 
+    // ===== 隧道口设备情况抽屉 =====
+    // 设备字段标签（对应腾讯文档K-O列；M/O列表头为空，按内容推断）
+    var DEVICE_FIELDS = [
+        { key: "civil",    label: "工务设备情况",  icon: "&#127956;" },
+        { key: "elec",     label: "电务设备情况",  icon: "&#9889;" },
+        { key: "signal",   label: "信号设备情况",  icon: "&#128667;" },
+        { key: "power",    label: "供电设备情况",  icon: "&#128161;" },
+        { key: "catenary", label: "接触网支柱",    icon: "&#9935;" }
+    ];
+
+    var PORTAL_ORDER = { "进口": 0, "出口": 1, "涵洞": 2, "中心点": 3, "其他": 4 };
+
+    function escapeHtml(s) {
+        return String(s)
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+    }
+
+    function renderDeviceText(text) {
+        return escapeHtml(text).replace(/\n/g, "<br>");
+    }
+
+    // 获取同一座隧道的全部洞口（同线路 + 同隧道名）
+    function getTunnelPortals(work) {
+        return STATE.allWorks.filter(function (w) {
+            return w.line === work.line && w.tunnelName === work.tunnelName;
+        }).sort(function (a, b) {
+            var oa = PORTAL_ORDER[a.position] !== undefined ? PORTAL_ORDER[a.position] : 9;
+            var ob = PORTAL_ORDER[b.position] !== undefined ? PORTAL_ORDER[b.position] : 9;
+            if (oa !== ob) return oa - ob;
+            return parseMileage(a.mileage) - parseMileage(b.mileage);
+        });
+    }
+
+    function openDeviceDrawer(work) {
+        var drawer = document.getElementById("device-drawer");
+        var nameEl = document.getElementById("device-drawer-name");
+        var badgeEl = document.getElementById("device-drawer-badge");
+        var body = document.getElementById("device-drawer-body");
+        var sourceEl = document.getElementById("device-drawer-source");
+
+        STATE.currentDeviceWork = work;
+
+        nameEl.textContent = work.tunnelName + " · 隧道口设备情况";
+        badgeEl.textContent = work.line + (work.tunnelNum > 0 ? " · " + work.tunnelNum + "号隧道" : "");
+
+        var portals = getTunnelPortals(work);
+        var hasAnyDevice = portals.some(function (w) { return w.device; });
+
+        var html = "";
+        portals.forEach(function (w) {
+            var posColor = getPositionColor(w.position);
+            html += '<div class="device-portal">';
+            html += '<div class="device-portal-head">';
+            html += '<span class="device-portal-dot" style="background:' + posColor + ';box-shadow:0 0 8px ' + posColor + ';"></span>';
+            html += '<span class="device-portal-name" style="color:' + posColor + ';">' + escapeHtml(w.position) + '</span>';
+            if (w.mileage) html += '<span class="device-portal-mileage">' + escapeHtml(w.mileage) + '</span>';
+            html += '</div>';
+
+            if (w.device) {
+                html += '<div class="device-sections">';
+                DEVICE_FIELDS.forEach(function (f) {
+                    var txt = w.device[f.key];
+                    if (!txt) return;
+                    html += '<div class="device-section">';
+                    html += '<div class="device-section-label">' + f.icon + ' ' + f.label + '</div>';
+                    html += '<div class="device-section-content">' + renderDeviceText(txt) + '</div>';
+                    html += '</div>';
+                });
+                html += '</div>';
+            } else {
+                html += '<div class="device-empty-portal">该隧道口暂无设备排查数据</div>';
+            }
+            html += '</div>';
+        });
+
+        if (!hasAnyDevice) {
+            html += '<div class="device-empty-tip">该隧道暂未录入设备排查数据<br>' +
+                '<span>数据来源：腾讯文档「作品集模板」K-O列（目前仅2座隧道录入测试数据）</span></div>';
+        }
+
+        body.innerHTML = html;
+        body.scrollTop = 0;
+        sourceEl.textContent = "数据来源：腾讯文档在线表格 K-O 列";
+        drawer.classList.add("active");
+    }
+
+    function closeDeviceDrawer() {
+        var drawer = document.getElementById("device-drawer");
+        if (drawer) drawer.classList.remove("active");
+        STATE.currentDeviceWork = null;
+    }
+
     // ===== VR预览弹窗（720云嵌入） =====
     function openVRModal(work) {
         var overlay = document.getElementById("modal-overlay");
@@ -829,43 +887,27 @@
         var footer = document.getElementById("modal-footer");
         var openLink = document.getElementById("modal-open-link");
 
-        titleEl.textContent = work.tunnelName + (work.position ? "（" + work.position + "）" : "") + " VR全景";
+        titleEl.textContent = work.tunnelName + "（" + work.position + "）VR全景";
         lineBadge.textContent = work.line + " · " + work.year;
+        openLink.href = work.url;
+        openLink.target = "_blank";
 
         // 底部信息
         footer.querySelector('[data-meta="tunnelNum"]').textContent = work.tunnelNum > 0 ? (work.tunnelNum + "号") : "无编号";
-        footer.querySelector('[data-meta="position"]').textContent = work.position || "—";
+        footer.querySelector('[data-meta="position"]').textContent = work.position;
         footer.querySelector('[data-meta="mileage"]').textContent = work.mileage || "无";
         footer.querySelector('[data-meta="elevation"]').textContent = work.elevation + " m";
         footer.querySelector('[data-meta="coords"]').textContent = (work.lng && work.lat) ? (work.lng.toFixed(6) + ", " + work.lat.toFixed(6)) : "无坐标";
         var yearMeta = footer.querySelector('[data-meta="year"]');
         if (yearMeta) yearMeta.textContent = work.year;
 
-        // 检查URL是否为空
-        if (!work.url || work.url.trim() === "") {
-            openLink.href = "#";
-            openLink.style.display = "none";
-            body.innerHTML =
-                '<div class="modal-placeholder" style="display:flex;">' +
-                    '<div class="icon">&#128679;</div>' +
-                    '<div class="text" style="font-size:16px;color:#ef4444;">该工点暂无VR全景链接</div>' +
-                    '<div class="url-hint" style="color:#64748b;margin-top:8px;">请在腾讯文档中为该条目补充720云链接</div>' +
-                '</div>';
-            overlay.classList.add("active");
-            return;
-        }
-
-        openLink.href = work.url;
-        openLink.target = "_blank";
-        openLink.style.display = "";
-
-        // 构建720云iframe（移除sandbox限制，720云是可信站点需要完整JS执行环境）
+        // 构建720云iframe
         body.innerHTML =
             '<iframe class="modal-iframe" src="' + work.url + '" ' +
             'frameborder="0" ' +
             'allowfullscreen="allowfullscreen" ' +
-            'allow="fullscreen; gyroscope; accelerometer; magnetometer; autoplay; clipboard-read; clipboard-write" ' +
-            'referrerpolicy="no-referrer-when-downgrade"></iframe>' +
+            'sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox" ' +
+            'referrerpolicy="no-referrer"></iframe>' +
             '<div class="modal-placeholder" style="display:none;">' +
                 '<div class="icon">&#127748;</div>' +
                 '<div class="text">VR全景加载中，若长时间未显示请点击下方按钮在新窗口打开</div>' +
@@ -880,13 +922,13 @@
             loaded = true;
         });
 
-        // 12秒后检测是否加载成功
+        // 8秒后检测
         setTimeout(function () {
             if (!loaded) {
                 iframe.style.display = "none";
                 placeholder.style.display = "flex";
             }
-        }, 12000);
+        }, 8000);
 
         overlay.classList.add("active");
     }
@@ -904,9 +946,24 @@
         document.getElementById("modal-overlay").addEventListener("click", function (e) {
             if (e.target === this) closeModal();
         });
+
+        // 设备抽屉事件
+        document.getElementById("device-drawer-close").addEventListener("click", closeDeviceDrawer);
+        document.getElementById("device-drawer-mask").addEventListener("click", closeDeviceDrawer);
+        document.getElementById("device-open-vr").addEventListener("click", function () {
+            if (STATE.currentDeviceWork) {
+                var work = STATE.currentDeviceWork;
+                closeDeviceDrawer();
+                openVRModal(work);
+            }
+        });
+
+        bindMapZoomControls();
+
         document.addEventListener("keydown", function (e) {
             if (e.key === "Escape") {
                 closeModal();
+                closeDeviceDrawer();
                 closeSearchDropdown();
             }
         });
@@ -915,102 +972,6 @@
             adjustScale();
             if (STATE.echartsMap) STATE.echartsMap.resize();
             if (STATE.echartsPie) STATE.echartsPie.resize();
-        });
-
-        // ===== 数据更新按钮 =====
-        var syncBtn = document.getElementById("sync-btn");
-        var syncIcon = document.getElementById("sync-icon");
-        var syncLabel = document.getElementById("sync-label");
-        var syncRunning = false;
-
-        syncBtn.addEventListener("click", async function () {
-            if (syncRunning) return;
-            if (!window.VR_SYNC) {
-                alert("同步模块未加载");
-                return;
-            }
-
-            syncRunning = true;
-            syncBtn.disabled = true;
-            syncBtn.classList.add("syncing");
-            syncIcon.innerHTML = "&#8987;"; // 沙漏
-            syncLabel.textContent = "同步中...";
-
-            try {
-                var result = await VR_SYNC.sync(function (msg, step) {
-                    console.log("[同步] 步骤" + step + ": " + msg);
-                    syncLabel.textContent = msg;
-                });
-
-                // 更新 VR_DATA
-                VR_DATA.works = result.works;
-                VR_DATA.tunnels = result.tunnels;
-                VR_DATA.workTypes = result.workTypes;
-                VR_DATA.lines = result.lines;
-
-                // 更新 STATE
-                STATE.allWorks = VR_DATA.works;
-                STATE.currentLine = null;
-                STATE.currentYear = null;
-                STATE.currentWorkshop = null;
-
-                // 更新线路颜色映射
-                STATE.lineColors = {};
-                VR_DATA.lines.forEach(function (l) {
-                    STATE.lineColors[l.name] = l.color;
-                });
-
-                // 重新渲染所有模块
-                renderStats();
-                renderLineStats();
-                renderWorkshopStats();
-                refreshAll();
-
-                // 更新头部日期显示同步时间
-                var dateEl = document.getElementById("header-date");
-                var now = result.syncTime;
-                var h = String(now.getHours()).padStart(2, "0");
-                var m = String(now.getMinutes()).padStart(2, "0");
-                var weekDays = ["日", "一", "二", "三", "四", "五", "六"];
-                dateEl.textContent = now.getFullYear() + "-" +
-                    String(now.getMonth() + 1).padStart(2, "0") + "-" +
-                    String(now.getDate()).padStart(2, "0") +
-                    " 已更新 " + h + ":" + m;
-
-                syncIcon.innerHTML = "&#9989;"; // 勾号
-                syncLabel.textContent = "已更新 " + result.works.length + "条";
-                syncBtn.classList.add("sync-done");
-
-                setTimeout(function () {
-                    syncBtn.classList.remove("syncing");
-                    syncBtn.classList.remove("sync-done");
-                    syncIcon.innerHTML = "&#128260;"; // 恢复刷新图标
-                    syncLabel.textContent = "数据更新";
-                }, 3000);
-
-            } catch (e) {
-                console.error("[同步] 失败:", e);
-                syncIcon.innerHTML = "&#9888;"; // 警告
-                syncLabel.textContent = "同步失败";
-                syncBtn.classList.add("sync-error");
-
-                setTimeout(function () {
-                    syncBtn.classList.remove("syncing");
-                    syncBtn.classList.remove("sync-error");
-                    syncIcon.innerHTML = "&#128260;";
-                    syncLabel.textContent = "数据更新";
-                }, 3000);
-
-                var errMsg = e.message;
-                var hint = "\n\n请检查网络连接后重试。";
-                if (errMsg.indexOf("代理") >= 0 || errMsg.indexOf("CORS") >= 0 || errMsg.indexOf("Referer") >= 0) {
-                    hint = "\n\n原因：腾讯文档API需要服务器端代理才能访问。\n解决方案：\n1. 部署 worker/proxy.js 到 Cloudflare Worker（免费，2分钟）\n2. 将 Worker 地址填入 js/sync.js 的 PROXY_URL 变量\n3. 当前数据仍由后台每日6点自动同步更新";
-                }
-                alert("数据同步失败: " + errMsg + hint);
-            } finally {
-                syncRunning = false;
-                syncBtn.disabled = false;
-            }
         });
     }
 
@@ -1270,7 +1231,6 @@
             startClock();
             renderStats();
             renderLineStats();
-            renderWorkshopStats();
             renderLineSelector();
             renderYearSelector();
             await initMap();
