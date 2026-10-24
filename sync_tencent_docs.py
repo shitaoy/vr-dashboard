@@ -40,10 +40,22 @@ LINES_CONFIG = [
 
 OUTPUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "js", "data.js")
 
-# 表头定义（10列）
+# 表头定义（15列）
+# A-J：VR全景数据；K-O：隧道口设备情况（K=工务设备情况, L=电务设备情况,
+# M=信号设备情况(表头为空), N=供电设备情况, O=接触网支柱(表头为空)）
 HEADERS = ["线名", "隧道号", "隧道名", "里程桩号", "全景点经度",
-           "全景点纬度", "全景点高程", "所在维修车间", "拍摄时间", "720云链接"]
+           "全景点纬度", "全景点高程", "所在维修车间", "拍摄时间", "720云链接",
+           "工务设备情况", "电务设备情况", "信号设备情况", "供电设备情况", "接触网支柱"]
 NUM_COLS = len(HEADERS)
+
+# 设备数据列（K-O，0-based 10-14）→ data.js 字段名
+DEVICE_COLS = {
+    10: "civil",      # K 工务设备情况
+    11: "elec",       # L 电务设备情况
+    12: "signal",     # M 信号设备情况
+    13: "power",      # N 供电设备情况
+    14: "catenary",   # O 接触网支柱
+}
 
 # 数字列（0-based列号）：隧道号(1), 经度(4), 纬度(5), 高程(6), 拍摄时间(8)
 NUMERIC_COLS = {1, 4, 5, 6, 8}
@@ -146,29 +158,13 @@ def decode_protobuf_data(api_data):
         except Exception:
             num_values.append(0.0)
 
-    # 提取超链接值（ctype=6 的单元格使用）
-    # sheet_data["5"]["2"] 是超链接列表，每项的 URL 在 ["3"]["3"]["1"] (bytes)
-    hyperlink_values = []
-    if "2" in sheet_data["5"] and isinstance(sheet_data["5"]["2"], list):
-        for item in sheet_data["5"]["2"]:
-            try:
-                link_data = item.get("3", {})
-                url_obj = link_data.get("3", {})
-                url_bytes = url_obj.get("1", b"")
-                if isinstance(url_bytes, bytes):
-                    hyperlink_values.append(url_bytes.decode("utf-8", errors="replace"))
-                else:
-                    hyperlink_values.append(str(url_bytes))
-            except Exception:
-                hyperlink_values.append("")
-
     # 提取单元格位置
     cells = sheet_data["6"]
 
-    return text_values, num_values, cells, hyperlink_values
+    return text_values, num_values, cells
 
 
-def reconstruct_table(text_values, num_values, cells, hyperlink_values=None):
+def reconstruct_table(text_values, num_values, cells):
     """根据单元格位置信息重建完整表格"""
 
     # 找到数字索引的偏移量
@@ -209,15 +205,6 @@ def reconstruct_table(text_values, num_values, cells, hyperlink_values=None):
             idx = f2_val if f2_val is not None else 0
             if idx < len(text_values):
                 value = text_values[idx]
-            else:
-                value = ""
-
-        elif ctype == 6:
-            # 超链接单元格：f2.1 是 hyperlink_values 的 0-based 索引
-            # 注意：hyperlink_values 列表可能包含未被单元格引用的条目（如已删除的超链接），
-            # 因此 f2_val 直接作为 0-based 索引使用，不减 1
-            if f2_val is not None and hyperlink_values and 0 <= f2_val < len(hyperlink_values):
-                value = hyperlink_values[f2_val]
             else:
                 value = ""
 
@@ -275,6 +262,15 @@ def parse_work_data(rows):
         workshop = str(row[7]).strip() if row[7] is not None else ""
         year_raw = row[8]
         url = str(row[9]).strip() if row[9] is not None else ""
+
+        # 解析设备数据（K-O列，仅部分隧道已填写）
+        device_values = {}
+        for col_idx, field_name in DEVICE_COLS.items():
+            if col_idx < len(row) and row[col_idx] is not None:
+                txt = str(row[col_idx]).strip()
+                if txt and txt != "/":
+                    device_values[field_name] = txt
+        device = device_values if device_values else None
 
         # 跳过空行
         if not line and not tunnel_name_raw and not url:
@@ -356,6 +352,7 @@ def parse_work_data(rows):
             "workshop": workshop,
             "year": year,
             "url": url,
+            "device": device,
         })
 
     # 构建隧道汇总
@@ -521,6 +518,12 @@ def fetch_and_parse_work_types():
     return work_types_data
 
 
+def esc_js(s):
+    """转义字符串中的特殊字符（换行/引号/反斜杠），保证可安全写入JS字符串字面量"""
+    return (str(s).replace("\r", "").replace("\\", "\\\\")
+            .replace('"', '\\"').replace("\n", "\\n"))
+
+
 def generate_data_js(works, tunnels_summary, work_types_data):
     """生成 js/data.js 文件"""
     js_lines = []
@@ -563,23 +566,33 @@ def generate_data_js(works, tunnels_summary, work_types_data):
     js_lines.append("")
 
     js_lines.append(f"  // ===== VR全景作品列表（共 {len(works)} 条） =====")
+    js_lines.append("  // device 字段：隧道口设备情况（来自主表K-O列：civil=工务/elec=电务/")
+    js_lines.append("  // signal=信号/power=供电/catenary=接触网支柱），仅已填写的隧道口携带该字段")
     js_lines.append("  works: [")
 
     for w in works:
-        js_lines.append("    {" +
-            "id: " + str(w["id"]) + ", " +
-            'line: "' + w["line"] + '", ' +
-            "tunnelNum: " + str(w["tunnelNum"]) + ", " +
-            'tunnelName: "' + w["tunnelName"] + '", ' +
-            'position: "' + w["position"] + '", ' +
-            'mileage: "' + w["mileage"] + '", ' +
-            "lng: " + str(w["lng"]) + ", " +
-            "lat: " + str(w["lat"]) + ", " +
-            "elevation: " + str(w["elevation"]) + ", " +
-            'workshop: "' + w["workshop"] + '", ' +
-            'year: "' + w["year"] + '", ' +
-            'url: "' + w["url"] + '"' +
-            "},")
+        parts = [
+            "id: " + str(w["id"]),
+            'line: "' + esc_js(w["line"]) + '"',
+            "tunnelNum: " + str(w["tunnelNum"]),
+            'tunnelName: "' + esc_js(w["tunnelName"]) + '"',
+            'position: "' + esc_js(w["position"]) + '"',
+            'mileage: "' + esc_js(w["mileage"]) + '"',
+            "lng: " + str(w["lng"]),
+            "lat: " + str(w["lat"]),
+            "elevation: " + str(w["elevation"]),
+            'workshop: "' + esc_js(w["workshop"]) + '"',
+            'year: "' + esc_js(w["year"]) + '"',
+            'url: "' + esc_js(w["url"]) + '"',
+        ]
+        if w.get("device"):
+            dev_parts = [
+                field + ': "' + esc_js(w["device"][field]) + '"'
+                for field in ("civil", "elec", "signal", "power", "catenary")
+                if field in w["device"]
+            ]
+            parts.append("device: { " + ", ".join(dev_parts) + " }")
+        js_lines.append("    { " + ", ".join(parts) + " },")
 
     js_lines.append("  ]")
     js_lines.append("};")
@@ -601,15 +614,14 @@ def main():
 
     # 2. 解码 protobuf
     print("[2/6] 解码 protobuf 数据...")
-    text_values, num_values, cells, hyperlink_values = decode_protobuf_data(api_data)
+    text_values, num_values, cells = decode_protobuf_data(api_data)
     print(f"      ✓ 文本值: {len(text_values)} 个")
     print(f"      ✓ 数字值: {len(num_values)} 个")
-    print(f"      ✓ 超链接值: {len(hyperlink_values)} 个")
     print(f"      ✓ 单元格: {len(cells)} 个")
 
     # 3. 重建表格
     print("[3/6] 重建表格结构...")
-    rows = reconstruct_table(text_values, num_values, cells, hyperlink_values)
+    rows = reconstruct_table(text_values, num_values, cells)
     print(f"      ✓ 表格: {len(rows)} 行 × {NUM_COLS} 列")
     print(f"      ✓ 数据行（不含表头）: {len(rows) - 1} 行")
 
