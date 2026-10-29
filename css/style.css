@@ -1746,3 +1746,61 @@ html, body {
     background: #7fd4ff;
     box-shadow: 0 0 7px #7fd4ff;
 }
+
+/* ============================================================
+   气泡信息卡字号整体调大 + 底部两个跳转链接
+   ============================================================ */
+#map-chart .leaflet-tooltip.vr-tip {
+    padding: 12px 14px;
+}
+
+.vr-tip-wrap {
+    min-width: 214px;
+}
+
+.vr-tip-title {
+    font-size: 16px;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+.vr-tip-body {
+    font-size: 13.5px;
+    line-height: 2;
+}
+
+.vr-tip-body .k {
+    width: 76px;
+}
+
+.vr-tip-foot {
+    font-size: 12.5px;
+    margin-top: 8px;
+    padding-top: 7px;
+}
+
+/* 可点击链接 */
+.vr-tip-link {
+    cursor: pointer;
+    transition: color 0.15s, text-shadow 0.15s;
+    user-select: none;
+}
+
+.vr-tip-link-vr:hover {
+    color: #ffffff;
+    text-shadow: 0 0 8px rgba(0, 212, 255, 0.9);
+}
+
+.vr-tip-link-dev {
+    color: var(--green);
+}
+
+.vr-tip-link-dev:hover {
+    color: #34d399;
+    text-shadow: 0 0 8px rgba(16, 185, 129, 0.9);
+}
+
+.vr-tip-link-arrow {
+    font-size: 10px;
+    margin-right: 4px;
+}
