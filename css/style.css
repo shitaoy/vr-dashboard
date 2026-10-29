@@ -1804,3 +1804,14 @@ html, body {
     font-size: 10px;
     margin-right: 4px;
 }
+
+/* 气泡可交互保险：确保链接区域可接收鼠标事件 */
+#map-chart .leaflet-tooltip.vr-tip {
+    pointer-events: auto;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.vr-tip-link {
+    cursor: pointer;
+}
