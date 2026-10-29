@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>金华高铁基础设施段管VR全景可视化大屏</title>
+    <!-- Leaflet（天地图卫星影像底图） -->
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/leaflet/1.9.4/leaflet.css">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -90,7 +92,7 @@
                 <div class="panel-scanline"></div>
                 <div class="panel-header">
                     <span class="panel-title">浙江省高铁VR全景分布图</span>
-                    <span class="panel-badge">RAILWAY MAP</span>
+                    <span class="panel-badge">TIANDITU SAT</span>
                 </div>
                 <div class="panel-body map-container" style="padding:0;">
                     <div id="map-chart"></div>
@@ -129,8 +131,11 @@
                     <div class="map-zoom-ctrl">
                         <button class="map-zoom-btn" id="map-zoom-in" title="放大">&#43;</button>
                         <button class="map-zoom-btn" id="map-zoom-out" title="缩小">&#8722;</button>
-                        <button class="map-zoom-btn" id="map-zoom-reset" title="重置缩放">&#8634;</button>
+                        <button class="map-zoom-btn" id="map-zoom-reset" title="重置视角">&#8634;</button>
                     </div>
+
+                    <!-- 底图版权 -->
+                    <div class="map-attribution">底图 &copy; 天地图影像</div>
 
                     <!-- 图例 -->
                     <div class="map-legend">
@@ -262,7 +267,16 @@
     </div>
 </div>
 
-<!-- ===== ECharts CDN（主+备） ===== -->
+<!-- ===== Leaflet（主+备）：天地图卫星影像底图 ===== -->
+<script src="https://cdn.bootcdn.net/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+    if (typeof L === "undefined") {
+        document.write('<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">');
+        document.write('<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"><\/script>');
+    }
+</script>
+
+<!-- ===== ECharts CDN（主+备，用于右侧饼图） ===== -->
 <script src="https://cdn.bootcdn.net/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
 <script>
     // 主CDN加载失败时自动切换备用CDN
