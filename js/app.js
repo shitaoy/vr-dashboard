@@ -12,11 +12,14 @@
     const STATE = {
         currentLine: null,          // 当前选中的线路（null=全部）
         currentYear: null,          // 当前选中的年份（null=全部）
-        echartsMap: null,
+        leafletMap: null,
+        markerLayer: null,
+        lineLayer: null,
+        markerIndex: {},
         echartsPie: null,
         allWorks: VR_DATA.works,
         lineColors: {},             // 线路名 -> 颜色
-        mapZoom: 1.15,              // 当前地图缩放级别
+        mapZoom: 8,                 // 当前地图缩放级别（Leaflet 层级）
         currentDeviceWork: null     // 设备抽屉当前展示的隧道口
     };
 
@@ -232,222 +235,204 @@
         });
     }
 
-    // ===== 浙江省地图 =====
-    async function initMap() {
-        var chartDom = document.getElementById("map-chart");
-        if (typeof echarts === "undefined") {
-            chartDom.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#f59e0b;font-size:14px;">ECharts库加载失败，请检查网络连接</div>';
-            return;
-        }
-        STATE.echartsMap = echarts.init(chartDom);
+    // ===== 地图（天地图卫星影像 · Leaflet） =====
+    // ★ 天地图 Key：请到 https://console.tianditu.gov.cn 申请「浏览器端」Key 后替换下方占位符
+    var TIANDITU_KEY = "f14fd967b65effa0ffd2ffee4128ad82";
+    var TD_SUBDOMAINS = ["0", "1", "2", "3", "4", "5", "6", "7"];
+    var MAP_CENTER = [29.05, 120.35];   // [纬度, 经度]
+    var MAP_INIT_ZOOM = 8;
+    var MAP_MIN_ZOOM = 4;
+    var MAP_MAX_ZOOM = 18;              // 天地图影像最大 18 级
 
-        // 优先加载本地GeoJSON（避免CORS问题），失败时回退到DataV API
-        var geoSources = [
-            "js/geo/zhejiang.json",
-            "https://geo.datav.aliyun.com/areas_v3/bound/330000_full.json"
-        ];
-        var geoJson = null;
-        var lastError = null;
+    function hasTiandituKey() {
+        return /^[0-9a-zA-Z]{32}$/.test(TIANDITU_KEY);
+    }
 
-        for (var i = 0; i < geoSources.length; i++) {
-            try {
-                var resp = await fetch(geoSources[i]);
-                if (!resp.ok) throw new Error("HTTP " + resp.status);
-                geoJson = await resp.json();
-                break;
-            } catch (e) {
-                lastError = e;
-                console.warn("地图数据源加载失败: " + geoSources[i], e.message);
-            }
-        }
+    // 天地图 WMTS 瓦片地址（img=卫星影像，cia=影像注记，坐标系 EPSG:3857）
+    function tiandituUrl(layer) {
+        return "https://t{s}.tianditu.gov.cn/" + layer + "_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0" +
+            "&LAYER=" + layer + "&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles" +
+            "&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=" + TIANDITU_KEY;
+    }
 
-        if (!geoJson) {
-            console.error("所有地图数据源均加载失败", lastError);
-            chartDom.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#f59e0b;font-size:14px;text-align:center;">地图数据加载失败<br><span style="font-size:12px;color:#64748b;">请检查网络连接或刷新页面重试</span></div>';
+    function initMap() {
+        var mapDom = document.getElementById("map-chart");
+        if (typeof L === "undefined") {
+            mapDom.innerHTML = '<div class="map-fallback-tip">地图组件加载失败，请检查网络连接后刷新</div>';
             return;
         }
 
-        echarts.registerMap("zhejiang", geoJson);
+        var map = L.map(mapDom, {
+            center: MAP_CENTER,
+            zoom: MAP_INIT_ZOOM,
+            minZoom: MAP_MIN_ZOOM,
+            maxZoom: MAP_MAX_ZOOM,
+            zoomControl: false,
+            attributionControl: false,
+            zoomSnap: 0.5,
+            wheelPxPerZoomLevel: 90,
+            worldCopyJump: false
+        });
+        STATE.leafletMap = map;
+
+        if (hasTiandituKey()) {
+            // 卫星影像
+            var imgLayer = L.tileLayer(tiandituUrl("img"), {
+                subdomains: TD_SUBDOMAINS,
+                maxZoom: MAP_MAX_ZOOM,
+                maxNativeZoom: 18,
+                crossOrigin: true
+            }).addTo(map);
+            // 影像注记（地名 / 道路）
+            L.tileLayer(tiandituUrl("cia"), {
+                subdomains: TD_SUBDOMAINS,
+                maxZoom: MAP_MAX_ZOOM,
+                maxNativeZoom: 18,
+                crossOrigin: true
+            }).addTo(map);
+
+            var errCount = 0;
+            imgLayer.on("tileerror", function () {
+                if (++errCount === 3) {
+                    var isLocal = /^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/.test(location.hostname);
+                    showMapHint(
+                        isLocal
+                            ? "当前通过 IP/本地地址访问，不在 Key 的域名白名单内（天地图返回「域名不匹配」）。到控制台把 127.0.0.1 加入白名单即可本地预览，或直接访问 https://shitaoy.github.io/vr-dashboard/ 查看线上效果。"
+                            : "瓦片被天地图拒绝，请检查 Key 是否过期/超额，以及当前域名是否已在 Key 的域名白名单中。",
+                        "卫星影像加载失败"
+                    );
+                }
+            });
+        } else {
+            showMapHint("请到 console.tianditu.gov.cn 申请「浏览器端」Key，替换 js/app.js 顶部的 TIANDITU_KEY 后即可显示卫星影像");
+        }
+
+        // 图层：铁路路线 / 全景点
+        STATE.lineLayer = L.layerGroup().addTo(map);
+        STATE.markerLayer = L.layerGroup().addTo(map);
+        STATE.markerIndex = {};
+
+        map.on("zoomend", function () { STATE.mapZoom = map.getZoom(); });
+        map.whenReady(function () {
+            setTimeout(function () { map.invalidateSize(); }, 120);
+        });
+
         renderMap();
+    }
 
-        // 确保地图尺寸正确（处理容器初始化时尺寸为0的情况）
-        setTimeout(function () {
-            if (STATE.echartsMap) STATE.echartsMap.resize();
-        }, 100);
+    function showMapHint(text, title) {
+        var dom = document.getElementById("map-chart");
+        if (!dom || dom.querySelector(".map-key-hint")) return;
+        var el = document.createElement("div");
+        el.className = "map-key-hint";
+        el.innerHTML = '<div class="map-key-hint-title">' + (title || "天地图 Key 未就绪") + '</div>' +
+            '<div class="map-key-hint-text">' + text + '</div>';
+        dom.appendChild(el);
+    }
+
+    function buildPointTooltip(w) {
+        var posColor = getPositionColor(w.position);
+        return '<div class="vr-tip-wrap">' +
+            '<div class="vr-tip-title" style="color:' + posColor + ';">' + w.tunnelName + '（' + w.position + '）</div>' +
+            '<div class="vr-tip-body">' +
+            '<div><span class="k">线路</span><span class="v">' + w.line + '</span></div>' +
+            (w.tunnelNum > 0 ? '<div><span class="k">隧道编号</span><span class="v">' + w.tunnelNum + '号</span></div>' : '') +
+            (w.mileage ? '<div><span class="k">里程桩号</span><span class="v amber">' + w.mileage + '</span></div>' : '') +
+            '<div><span class="k">高程</span><span class="v">' + w.elevation + ' m</span></div>' +
+            '<div><span class="k">维修车间</span><span class="v">' + w.workshop + '</span></div>' +
+            '<div><span class="k">拍摄年份</span><span class="v green">' + w.year + '</span></div>' +
+            '</div>' +
+            '<div class="vr-tip-foot">点击查看VR全景</div>' +
+            '</div>';
     }
 
     function renderMap() {
-        var works = getFilteredWorks();
+        var map = STATE.leafletMap;
+        if (!map || !STATE.markerLayer) return;
 
-        // 过滤掉无坐标的点（lng=0 或 lat=0）
-        var geoWorks = works.filter(function (w) {
+        // 过滤无坐标点并按线路/隧道号排序
+        var geoWorks = getFilteredWorks().filter(function (w) {
             return w.lng !== 0 && w.lat !== 0;
-        });
-
-        // 按线路和隧道号排序，用于绘制铁路线
-        var sortedWorks = geoWorks.slice().sort(function (a, b) {
+        }).sort(function (a, b) {
             if (a.line !== b.line) return a.line.localeCompare(b.line);
             if (a.tunnelNum !== b.tunnelNum) return a.tunnelNum - b.tunnelNum;
             return a.position === "进口" ? -1 : 1;
         });
 
-        // 散点数据
-        var scatterData = sortedWorks.map(function (w) {
-            return {
-                name: w.tunnelName + "（" + w.position + "）",
-                value: [w.lng, w.lat, w.elevation, w]
-            };
-        });
+        STATE.lineLayer.clearLayers();
+        STATE.markerLayer.clearLayers();
+        STATE.markerIndex = {};
 
-        // 按线路分组路线
-        var lineGroups = {};
-        sortedWorks.forEach(function (w) {
-            if (!lineGroups[w.line]) lineGroups[w.line] = [];
-            lineGroups[w.line].push([w.lng, w.lat]);
-        });
-
-        var linesData = Object.keys(lineGroups).map(function (lineName) {
-            return {
-                name: lineName,
-                coords: lineGroups[lineName]
-            };
-        });
-
-        var option = {
-            backgroundColor: "transparent",
-            tooltip: {
-                trigger: "item",
-                backgroundColor: "rgba(6, 12, 31, 0.92)",
-                borderColor: "rgba(0, 212, 255, 0.5)",
-                borderWidth: 1,
-                textStyle: { color: "#e2e8f0", fontSize: 13 },
-                formatter: function (p) {
-                    if (p.seriesType === "effectScatter") {
-                        var w = p.data.value[3];
-                        var posColor = getPositionColor(w.position);
-                        return '<div style="font-weight:700;color:' + posColor + ';font-size:14px;margin-bottom:4px;">' +
-                            w.tunnelName + '（' + w.position + '）</div>' +
-                            '<div style="font-size:12px;line-height:1.8;">' +
-                            '<span style="color:#64748b;">线路：</span><span style="color:#e2e8f0;">' + w.line + '</span><br>' +
-                            (w.tunnelNum > 0 ? '<span style="color:#64748b;">隧道编号：</span><span style="color:#e2e8f0;">' + w.tunnelNum + '号</span><br>' : '') +
-                            (w.mileage ? '<span style="color:#64748b;">里程桩号：</span><span style="color:#f59e0b;font-family:Consolas;">' + w.mileage + '</span><br>' : '') +
-                            '<span style="color:#64748b;">高程：</span><span style="color:#e2e8f0;">' + w.elevation + ' m</span><br>' +
-                            '<span style="color:#64748b;">维修车间：</span><span style="color:#e2e8f0;">' + w.workshop + '</span><br>' +
-                            '<span style="color:#64748b;">拍摄年份：</span><span style="color:#10b981;font-weight:600;">' + w.year + '</span>' +
-                            '</div>' +
-                            '<div style="font-size:11px;color:#00d4ff;margin-top:6px;border-top:1px solid rgba(0,212,255,0.2);padding-top:4px;">点击查看VR全景</div>';
-                    }
-                    return p.name;
-                }
-            },
-            geo: {
-                map: "zhejiang",
-                roam: true,
-                scaleLimit: { min: 0.7, max: 25 },
-                zoom: STATE.mapZoom,
-                center: [120.3, 29.0],
-                label: {
-                    show: true,
-                    color: "rgba(148, 163, 184, 0.5)",
-                    fontSize: 10
-                },
-                itemStyle: {
-                    areaColor: "#0a1738",
-                    borderColor: "rgba(0, 212, 255, 0.2)",
-                    borderWidth: 1
-                },
-                emphasis: {
-                    label: { color: "#00d4ff" },
-                    itemStyle: {
-                        areaColor: "rgba(0, 212, 255, 0.08)",
-                        borderColor: "rgba(0, 212, 255, 0.4)"
-                    }
-                }
-            },
-            series: [
-                // 铁路路线（连线）- 按线路着色
-                {
-                    name: "铁路路线",
-                    type: "lines",
-                    coordinateSystem: "geo",
-                    zlevel: 1,
-                    polyline: true,
-                    lineStyle: {
-                        color: function (p) {
-                            return getLineColor(p.data.name);
-                        },
-                        width: 2,
-                        opacity: 0.3,
-                        curveness: 0
-                    },
-                    effect: {
-                        show: true,
-                        period: 8,
-                        trailLength: 0.5,
-                        symbol: "circle",
-                        symbolSize: 3,
-                        color: "rgba(0, 212, 255, 0.6)"
-                    },
-                    data: linesData
-                },
-                // VR全景散点
-                {
-                    name: "VR全景",
-                    type: "effectScatter",
-                    coordinateSystem: "geo",
-                    zlevel: 2,
-                    rippleEffect: { brushType: "stroke", scale: 3, period: 4 },
-                    symbolSize: 7,
-                    itemStyle: {
-                        color: function (p) {
-                            var w = p.data.value[3];
-                            return getPositionColor(w.position);
-                        },
-                        shadowBlur: 8,
-                        shadowColor: "rgba(0, 212, 255, 0.4)"
-                    },
-                    data: scatterData
-                }
-            ]
-        };
-
-        STATE.echartsMap.setOption(option, true);
-
-        // 跟踪滚轮/拖拽缩放，保持缩放级别状态同步
-        STATE.echartsMap.off("geoRoam");
-        STATE.echartsMap.on("geoRoam", function (e) {
-            if (e.zoom && e.zoom !== 1) {
-                STATE.mapZoom = Math.max(0.7, Math.min(25, STATE.mapZoom * e.zoom));
+        // ===== 铁路路线：按线路分组着色 =====
+        var lineGroups = {}, lineOrder = [];
+        geoWorks.forEach(function (w) {
+            if (!lineGroups[w.line]) {
+                lineGroups[w.line] = [];
+                lineOrder.push(w.line);
             }
+            lineGroups[w.line].push([w.lat, w.lng]);
         });
 
-        // 点击事件
-        STATE.echartsMap.off("click");
-        STATE.echartsMap.on("click", function (params) {
-            if (params.seriesType === "effectScatter") {
-                var work = params.data.value[3];
-                openVRModal(work);
-            }
+        lineOrder.forEach(function (lineName) {
+            var coords = lineGroups[lineName];
+            if (coords.length < 2) return;
+            var color = getLineColor(lineName);
+            // 外发光
+            L.polyline(coords, {
+                color: color, weight: 6, opacity: 0.14,
+                lineCap: "round", interactive: false
+            }).addTo(STATE.lineLayer);
+            // 流动亮线
+            L.polyline(coords, {
+                color: color, weight: 1.8, opacity: 0.9,
+                lineCap: "round", className: "rail-flow", interactive: false
+            }).addTo(STATE.lineLayer);
+        });
+
+        // ===== 全景点：按位置类型着色 =====
+        geoWorks.forEach(function (w) {
+            var posColor = getPositionColor(w.position);
+            var marker = L.circleMarker([w.lat, w.lng], {
+                radius: 4.5,
+                color: "#ffffff",
+                weight: 1,
+                opacity: 0.9,
+                fillColor: posColor,
+                fillOpacity: 0.95
+            });
+            marker.bindTooltip(buildPointTooltip(w), {
+                direction: "top",
+                offset: [0, -6],
+                opacity: 1,
+                className: "vr-tip"
+            });
+            marker.on("click", function () { openVRModal(w); });
+            marker.addTo(STATE.markerLayer);
+            STATE.markerIndex[w.id] = marker;
         });
     }
 
     // ===== 地图缩放控制 =====
     function setMapZoom(target) {
-        if (!STATE.echartsMap) return;
-        STATE.mapZoom = Math.max(0.7, Math.min(25, target));
-        // 局部合并更新 geo 缩放级别（不重置其他配置）
-        STATE.echartsMap.setOption({
-            geo: { zoom: STATE.mapZoom, center: [120.3, 29.0] }
-        });
+        var map = STATE.leafletMap;
+        if (!map) return;
+        STATE.mapZoom = Math.max(MAP_MIN_ZOOM, Math.min(MAP_MAX_ZOOM, target));
+        map.setZoom(STATE.mapZoom, { animate: true });
     }
 
     function bindMapZoomControls() {
         var inBtn = document.getElementById("map-zoom-in");
         var outBtn = document.getElementById("map-zoom-out");
         var resetBtn = document.getElementById("map-zoom-reset");
-        if (inBtn) inBtn.addEventListener("click", function () { setMapZoom(STATE.mapZoom * 1.6); });
-        if (outBtn) outBtn.addEventListener("click", function () { setMapZoom(STATE.mapZoom / 1.6); });
-        if (resetBtn) resetBtn.addEventListener("click", function () { setMapZoom(1.15); });
+        if (inBtn) inBtn.addEventListener("click", function () {
+            if (STATE.leafletMap) STATE.leafletMap.zoomIn(1);
+        });
+        if (outBtn) outBtn.addEventListener("click", function () {
+            if (STATE.leafletMap) STATE.leafletMap.zoomOut(1);
+        });
+        if (resetBtn) resetBtn.addEventListener("click", function () {
+            if (STATE.leafletMap) STATE.leafletMap.setView(MAP_CENTER, MAP_INIT_ZOOM, { animate: true });
+        });
     }
 
     // ===== 工点类型长度分布饼图 =====
@@ -970,7 +955,7 @@
 
         window.addEventListener("resize", function () {
             adjustScale();
-            if (STATE.echartsMap) STATE.echartsMap.resize();
+            if (STATE.leafletMap) STATE.leafletMap.invalidateSize();
             if (STATE.echartsPie) STATE.echartsPie.resize();
         });
     }
@@ -1171,49 +1156,36 @@
     }
 
     function highlightMapPoint(work) {
-        if (!STATE.echartsMap || work.lng === 0 || work.lat === 0) return;
+        var map = STATE.leafletMap;
+        if (!map || !work.lng || !work.lat) return;
 
-        // 找到该点在当前地图数据中的索引
-        var works = getFilteredWorks().filter(function (w) {
-            return w.lng !== 0 && w.lat !== 0;
-        }).sort(function (a, b) {
-            if (a.line !== b.line) return a.line.localeCompare(b.line);
-            if (a.tunnelNum !== b.tunnelNum) return a.tunnelNum - b.tunnelNum;
-            return a.position === "进口" ? -1 : 1;
-        });
+        // 飞到目标点
+        var targetZoom = Math.max(map.getZoom(), 14);
+        map.flyTo([work.lat, work.lng], targetZoom, { duration: 0.9 });
 
-        var dataIndex = works.indexOf(work);
-        if (dataIndex < 0) return;
+        var marker = STATE.markerIndex[work.id];
+        if (!marker) return;
 
-        // 临时高亮目标点：通过dispatchAction触发tooltip
-        STATE.echartsMap.dispatchAction({
-            type: "showTip",
-            seriesIndex: 1,
-            dataIndex: dataIndex
-        });
+        // 打开气泡
+        setTimeout(function () {
+            if (marker._map) marker.openTooltip();
+        }, 950);
 
-        // 闪烁高亮
+        // 脉冲高亮
         var count = 0;
-        var flashTimer = setInterval(function () {
+        var timer = setInterval(function () {
             count++;
-            if (count > 6 || !STATE.echartsMap) {
-                clearInterval(flashTimer);
+            if (count > 6 || !STATE.leafletMap || !marker._map) {
+                clearInterval(timer);
+                marker.setStyle({ radius: 4.5, weight: 1, color: "#ffffff", opacity: 0.9 });
                 return;
             }
-            if (count % 2 === 0) {
-                STATE.echartsMap.dispatchAction({
-                    type: "highlight",
-                    seriesIndex: 1,
-                    dataIndex: dataIndex
-                });
+            if (count % 2) {
+                marker.setStyle({ radius: 9, weight: 2, color: "#00d4ff", opacity: 1 });
             } else {
-                STATE.echartsMap.dispatchAction({
-                    type: "downplay",
-                    seriesIndex: 1,
-                    dataIndex: dataIndex
-                });
+                marker.setStyle({ radius: 4.5, weight: 1, color: "#ffffff", opacity: 0.9 });
             }
-        }, 400);
+        }, 380);
     }
 
     function closeSearchDropdown() {
