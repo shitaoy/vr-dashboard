@@ -1681,3 +1681,68 @@ html, body {
 #map-chart path.leaflet-interactive:hover {
     filter: drop-shadow(0 0 6px rgba(0, 212, 255, 0.9));
 }
+
+/* ============================================================
+   隧道口常驻名称标注（卫星影像上，参照截图样式）
+   ============================================================ */
+.portal-label-wrap {
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    transform: translateX(-50%);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 500;
+}
+
+/* 缩放级别达到 LABEL_MIN_ZOOM 后显示 */
+.labels-on .portal-label-wrap {
+    display: flex;
+}
+
+.portal-label-name {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    line-height: 1.3;
+    color: #ffffff;
+    text-shadow:
+        0 0 3px #0a1a30,
+        1.5px 1.5px 0 #0a1a30,
+        -1.5px 1.5px 0 #0a1a30,
+        1.5px -1.5px 0 #0a1a30,
+        -1.5px -1.5px 0 #0a1a30,
+        0 2px 8px rgba(0, 0, 0, 0.85);
+}
+
+.portal-label-pos {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    line-height: 1.5;
+    text-shadow:
+        0 0 3px #0a1a30,
+        1.5px 1.5px 0 #0a1a30,
+        -1.5px 1.5px 0 #0a1a30,
+        1.5px -1.5px 0 #0a1a30,
+        -1.5px -1.5px 0 #0a1a30,
+        0 2px 8px rgba(0, 0, 0, 0.85);
+}
+
+.portal-label-line {
+    width: 2px;
+    height: 26px;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.95), rgba(127, 212, 255, 0.35));
+    box-shadow: 0 0 5px rgba(127, 212, 255, 0.7);
+}
+
+.portal-label-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #7fd4ff;
+    box-shadow: 0 0 7px #7fd4ff;
+}
