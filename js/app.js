@@ -418,6 +418,17 @@
                 interactive: true,
                 className: "vr-tip"
             });
+            // 气泡延迟关闭：鼠标从圆点移向气泡的间隙不会立即消失，
+            // 悬停在气泡上时保持显示，离开气泡约 0.4s 后关闭
+            marker.off("mouseout");     // 移除 Leaflet 默认的移出立即关闭
+            var closeTimer = null;
+            marker.on("mouseout", function () {
+                if (closeTimer) clearTimeout(closeTimer);
+                closeTimer = setTimeout(function () { marker.closeTooltip(); }, 600);
+            });
+            marker.on("mouseover", function () {
+                if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
+            });
             marker.on("click", function () { openVRModal(w); });
             // 气泡内"点击查看设备情况"链接
             marker.on("tooltipopen", function (e) {
@@ -428,6 +439,16 @@
                         L.DomEvent.preventDefault(ev);
                         L.DomEvent.stopPropagation(ev);
                         openDeviceDrawer(w);
+                    });
+                }
+                // 悬停气泡期间保持显示，移开气泡后延迟关闭
+                if (el) {
+                    L.DomEvent.on(el, "mouseenter", function () {
+                        if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
+                    });
+                    L.DomEvent.on(el, "mouseleave", function () {
+                        if (closeTimer) clearTimeout(closeTimer);
+                        closeTimer = setTimeout(function () { marker.closeTooltip(); }, 400);
                     });
                 }
             });
