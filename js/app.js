@@ -347,7 +347,12 @@
             '<div><span class="k">维修车间</span><span class="v">' + w.workshop + '</span></div>' +
             '<div><span class="k">拍摄年份</span><span class="v green">' + w.year + '</span></div>' +
             '</div>' +
-            '<div class="vr-tip-foot">点击查看VR全景</div>' +
+            '<div class="vr-tip-foot vr-tip-link vr-tip-link-vr">' +
+                '<span class="vr-tip-link-arrow">&#9654;</span> 点击查看VR全景' +
+            '</div>' +
+            '<div class="vr-tip-foot vr-tip-link vr-tip-link-dev">' +
+                '<span class="vr-tip-link-arrow">&#9654;</span> 点击查看设备情况' +
+            '</div>' +
             '</div>';
     }
 
@@ -410,9 +415,22 @@
                 direction: "top",
                 offset: [0, -6],
                 opacity: 1,
+                interactive: true,
                 className: "vr-tip"
             });
             marker.on("click", function () { openVRModal(w); });
+            // 气泡内"点击查看设备情况"链接
+            marker.on("tooltipopen", function (e) {
+                var el = e.tooltip && e.tooltip.getElement();
+                var dev = el && el.querySelector(".vr-tip-link-dev");
+                if (dev) {
+                    L.DomEvent.on(dev, "click", function (ev) {
+                        L.DomEvent.preventDefault(ev);
+                        L.DomEvent.stopPropagation(ev);
+                        openDeviceDrawer(w);
+                    });
+                }
+            });
             marker.addTo(STATE.markerLayer);
             STATE.markerIndex[w.id] = marker;
 
