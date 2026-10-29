@@ -15,6 +15,7 @@
         leafletMap: null,
         markerLayer: null,
         lineLayer: null,
+        labelLayer: null,
         markerIndex: {},
         echartsPie: null,
         allWorks: VR_DATA.works,
@@ -243,6 +244,7 @@
     var MAP_INIT_ZOOM = 8;
     var MAP_MIN_ZOOM = 4;
     var MAP_MAX_ZOOM = 18;              // 天地图影像最大 18 级
+    var LABEL_MIN_ZOOM = 10;            // 达到该级别后显示隧道口名称标注
 
     function hasTiandituKey() {
         return /^[0-9a-zA-Z]{32}$/.test(TIANDITU_KEY);
@@ -307,12 +309,15 @@
             showMapHint("请到 console.tianditu.gov.cn 申请「浏览器端」Key，替换 js/app.js 顶部的 TIANDITU_KEY 后即可显示卫星影像");
         }
 
-        // 图层：铁路路线 / 全景点
+        // 图层：铁路路线 / 全景点 / 隧道口名称标注
         STATE.lineLayer = L.layerGroup().addTo(map);
         STATE.markerLayer = L.layerGroup().addTo(map);
+        STATE.labelLayer = L.layerGroup().addTo(map);
         STATE.markerIndex = {};
 
         map.on("zoomend", function () { STATE.mapZoom = map.getZoom(); });
+        map.on("zoomend", updateLabelVisibility);
+        updateLabelVisibility();
         map.whenReady(function () {
             setTimeout(function () { map.invalidateSize(); }, 120);
         });
@@ -361,6 +366,7 @@
 
         STATE.lineLayer.clearLayers();
         STATE.markerLayer.clearLayers();
+        STATE.labelLayer.clearLayers();
         STATE.markerIndex = {};
 
         // ===== 铁路路线：按线路分组着色 =====
@@ -409,7 +415,33 @@
             marker.on("click", function () { openVRModal(w); });
             marker.addTo(STATE.markerLayer);
             STATE.markerIndex[w.id] = marker;
+
+            // 常驻名称标注（达到 LABEL_MIN_ZOOM 后经 CSS 显示）
+            var label = L.marker([w.lat, w.lng], {
+                icon: L.divIcon({
+                    className: "",
+                    html: '<div class="portal-label-wrap">' +
+                        '<div class="portal-label-name">' + w.tunnelName + '</div>' +
+                        '<div class="portal-label-pos" style="color:' + posColor + ';">' + w.position + '</div>' +
+                        '<div class="portal-label-line"></div>' +
+                        '<div class="portal-label-dot"></div>' +
+                        '</div>',
+                    iconSize: [0, 0],
+                    iconAnchor: [0, 0]
+                }),
+                interactive: false,
+                keyboard: false
+            });
+            label.addTo(STATE.labelLayer);
         });
+    }
+
+    // 标注随缩放级别显隐
+    function updateLabelVisibility() {
+        var map = STATE.leafletMap;
+        if (!map) return;
+        var on = map.getZoom() >= LABEL_MIN_ZOOM;
+        map.getContainer().classList.toggle("labels-on", on);
     }
 
     // ===== 地图缩放控制 =====
