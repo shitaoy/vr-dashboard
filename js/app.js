@@ -430,27 +430,33 @@
                 if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
             });
             marker.on("click", function () { openVRModal(w); });
-            // 气泡内"点击查看设备情况"链接
+            // 气泡内两个跳转链接（事件委托：绑定一次，内容刷新也有效）
             marker.on("tooltipopen", function (e) {
                 var el = e.tooltip && e.tooltip.getElement();
-                var dev = el && el.querySelector(".vr-tip-link-dev");
-                if (dev) {
-                    L.DomEvent.on(dev, "click", function (ev) {
+                if (!el) return;
+                if (!e.tooltip._linkBound) {
+                    e.tooltip._linkBound = true;
+                    L.DomEvent.on(el, "click", function (ev) {
+                        var t = ev.target && ev.target.closest ? ev.target.closest(".vr-tip-link") : null;
+                        if (!t) return;
                         L.DomEvent.preventDefault(ev);
                         L.DomEvent.stopPropagation(ev);
-                        openDeviceDrawer(w);
+                        if (t.classList.contains("vr-tip-link-dev")) {
+                            openDeviceDrawer(w);
+                        } else if (t.classList.contains("vr-tip-link-vr")) {
+                            marker.closeTooltip();
+                            openVRModal(w);
+                        }
                     });
                 }
                 // 悬停气泡期间保持显示，移开气泡后延迟关闭
-                if (el) {
-                    L.DomEvent.on(el, "mouseenter", function () {
-                        if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
-                    });
-                    L.DomEvent.on(el, "mouseleave", function () {
-                        if (closeTimer) clearTimeout(closeTimer);
-                        closeTimer = setTimeout(function () { marker.closeTooltip(); }, 400);
-                    });
-                }
+                L.DomEvent.on(el, "mouseenter", function () {
+                    if (closeTimer) { clearTimeout(closeTimer); closeTimer = null; }
+                });
+                L.DomEvent.on(el, "mouseleave", function () {
+                    if (closeTimer) clearTimeout(closeTimer);
+                    closeTimer = setTimeout(function () { marker.closeTooltip(); }, 400);
+                });
             });
             marker.addTo(STATE.markerLayer);
             STATE.markerIndex[w.id] = marker;
