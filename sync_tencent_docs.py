@@ -39,6 +39,8 @@ LINES_CONFIG = [
 ]
 
 OUTPUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "js", "data.js")
+# 本地专用：隧道口设备情况（已在 .gitignore 排除，上传 GitHub 时不包含）
+LOCAL_DEVICE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "js", "data.local.js")
 
 # 表头定义（15列）
 # A-J：VR全景数据；K-O：隧道口设备情况（K=工务设备情况, L=电务设备情况,
@@ -566,8 +568,7 @@ def generate_data_js(works, tunnels_summary, work_types_data):
     js_lines.append("")
 
     js_lines.append(f"  // ===== VR全景作品列表（共 {len(works)} 条） =====")
-    js_lines.append("  // device 字段：隧道口设备情况（来自主表K-O列：civil=工务/elec=电务/")
-    js_lines.append("  // signal=信号/power=供电/catenary=接触网支柱），仅已填写的隧道口携带该字段")
+    js_lines.append("  // 注意：设备情况（K-O列）不写入本文件，而是单独生成 js/data.local.js（仅本地保留，不上传 GitHub）")
     js_lines.append("  works: [")
 
     for w in works:
@@ -585,19 +586,58 @@ def generate_data_js(works, tunnels_summary, work_types_data):
             'year: "' + esc_js(w["year"]) + '"',
             'url: "' + esc_js(w["url"]) + '"',
         ]
-        if w.get("device"):
-            dev_parts = [
-                field + ': "' + esc_js(w["device"][field]) + '"'
-                for field in ("civil", "elec", "signal", "power", "catenary")
-                if field in w["device"]
-            ]
-            parts.append("device: { " + ", ".join(dev_parts) + " }")
         js_lines.append("    { " + ", ".join(parts) + " },")
 
     js_lines.append("  ]")
     js_lines.append("};")
 
     return "\n".join(js_lines)
+
+
+def device_key(line, tunnel_num, position):
+    """设备数据的匹配键：线名|隧道号|位置（与前端 app.js 一致）"""
+    return f"{line}|{tunnel_num}|{position}"
+
+
+def generate_device_js(works):
+    """生成 js/data.local.js —— 仅本地使用的隧道口设备情况（不上传 GitHub）
+    结构：window.VR_DEVICE = { "线名|隧道号|位置": {civil, elec, signal, power, catenary} }
+    """
+    lines = []
+    lines.append("/**")
+    lines.append(" * ============================================================")
+    lines.append(" *  隧道口设备情况 —— 本地专用数据（请勿上传 GitHub）")
+    lines.append(" * ============================================================")
+    lines.append(" *  数据来源：腾讯文档主表 K-O 列")
+    lines.append(" *    K=工务设备情况  L=电务设备情况  M=信号设备情况")
+    lines.append(" *    N=供电设备情况  O=接触网支柱")
+    lines.append(f" *  同步时间：{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    lines.append(" *  说明：此文件已在 .gitignore 中排除，线上仓库不含该文件，")
+    lines.append(" *        因此线上大屏只显示非设备信息，本地打开才显示设备情况。")
+    lines.append(" * ============================================================")
+    lines.append(" */")
+    lines.append("window.VR_DEVICE = {")
+
+    count = 0
+    for w in works:
+        dev = w.get("device")
+        if not dev:
+            continue
+        count += 1
+        key = device_key(w["line"], w["tunnelNum"], w["position"])
+        dev_parts = [
+            field + ': "' + esc_js(dev[field]) + '"'
+            for field in ("civil", "elec", "signal", "power", "catenary")
+            if field in dev
+        ]
+        lines.append('  "' + esc_js(key) + '": {')
+        lines.append('    tunnelName: "' + esc_js(w["tunnelName"]) + '",')
+        lines.append('    mileage: "' + esc_js(w["mileage"]) + '",')
+        lines.append("    " + ", ".join(dev_parts))
+        lines.append("  },")
+
+    lines.append("};")
+    return "\n".join(lines), count
 
 
 def main():
@@ -647,15 +687,21 @@ def main():
     else:
         print(f"      ⚠ 未获取到工点类型数据")
 
-    # 6. 生成 data.js
-    print("[6/6] 生成 data.js...")
+    # 6. 生成 data.js（不含设备）与 data.local.js（仅本地设备数据）
+    print("[6/6] 生成 data.js 与 data.local.js...")
     js_content = generate_data_js(works, tunnels, work_types_data)
+    device_content, device_count = generate_device_js(works)
 
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         f.write(js_content)
 
-    print(f"      ✓ 已写入: {OUTPUT_PATH}")
+    print(f"      ✓ 已写入: {OUTPUT_PATH}（不含设备情况，可上传 GitHub）")
+
+    with open(LOCAL_DEVICE_PATH, "w", encoding="utf-8") as f:
+        f.write(device_content)
+
+    print(f"      ✓ 已写入: {LOCAL_DEVICE_PATH}（{device_count} 个隧道口含设备情况，仅本地保留）")
 
     # 统计线路分布
     line_counts = {}
