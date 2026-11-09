@@ -4,7 +4,7 @@
  * ============================================================
  *  数据来源：腾讯文档在线表格（自动同步）
  *  文档链接：https://docs.qq.com/sheet/DYk1EZUJBQmR0dmJa
- *  同步时间：2026-10-24 12:04:30
+ *  同步时间：2026-11-09 22:44:56
  *  作品总数：560 条
  *  隧道总数：307 座
  * ============================================================
@@ -1625,12 +1625,11 @@ const VR_DATA = {
 },
 
   // ===== VR全景作品列表（共 560 条） =====
-  // device 字段：隧道口设备情况（来自主表K-O列：civil=工务/elec=电务/
-  // signal=信号/power=供电/catenary=接触网支柱），仅已填写的隧道口携带该字段
+  // 注意：设备情况（K-O列）不写入本文件，而是单独生成 js/data.local.js（仅本地保留，不上传 GitHub）
   works: [
-    { id: 1, line: "杭温铁路", tunnelNum: 2, tunnelName: "石尖", position: "进口", mileage: "K7+341", lng: 119.779341, lat: 29.780224, elevation: 253.1, workshop: "横店维修车间", year: "2026", url: "https://www.720yun.com/t/13akuy17df7?scene_id=129907469", device: { civil: "洞口洞门型式：斜切开孔式缓冲结构洞门（L=28m）；\n回填材料：C20片石混凝土；\n边仰坡坡率及支挡结构形式：回填坡率1:0.75，回填高度11.48m。回填线以上仰坡采用骨架护坡防护，坡比1:1。\n洞门排水措施：洞口边仰坡开挖线外设截水天沟（距边、仰坡开挖线边缘不小于5m，坡度不小于3‰），围绕洞口环形布置，末端与路基天沟或自然沟渠妥善顺接；明洞段采用防水板+土工布+水泥砂浆保护层等综合防排水措施。", elec: "下行：67CG\n上行：88CG", signal: "无", power: "供电单元：合杭高速5197、5198供电单元", catenary: "接触网支柱：327#；328#" } },
+    { id: 1, line: "杭温铁路", tunnelNum: 2, tunnelName: "石尖", position: "进口", mileage: "K7+341", lng: 119.779341, lat: 29.780224, elevation: 253.1, workshop: "横店维修车间", year: "2026", url: "https://www.720yun.com/t/13akuy17df7?scene_id=129907469" },
     { id: 2, line: "杭温铁路", tunnelNum: 2, tunnelName: "石尖", position: "出口", mileage: "K12+480", lng: 119.806775, lat: 29.74008, elevation: 318.6, workshop: "横店维修车间", year: "2026", url: "https://www.720yun.com/t/13akuy17df7?scene_id=129907470" },
-    { id: 3, line: "杭温铁路", tunnelNum: 3, tunnelName: "木匪岭", position: "进口", mileage: "K12+723", lng: 119.807765, lat: 29.738546, elevation: 317.8, workshop: "横店维修车间", year: "2026", url: "https://www.720yun.com/t/13akuy17df7?scene_id=129907471", device: { civil: "洞口洞门型式：缓冲结构倒切式洞门（L=17m）；\n回填材料：C20片石混凝土；\n边仰坡坡率及支挡结构形式：回填坡率1:0.5，回填高度11.48m。回填线以上边坡采用骨架护坡，坡比1:1.25。\n洞门排水措施：洞口边仰坡开挖线外设截水天沟（距边、仰坡开挖线边缘不小于5m，坡度不小于3‰），围绕洞口环形布置，末端与路基天沟或自然沟渠妥善顺接；明洞段采用防水板+土工布+水泥砂浆保护层等综合防排水措施。", elec: "下行：107AG\n上行：140CG", signal: "140BGJS、140CGFS、FS12、JS14", power: "供电单元：合杭高速5197、5198供电单元", catenary: "接触网支柱：599#；600#" } },
+    { id: 3, line: "杭温铁路", tunnelNum: 3, tunnelName: "木匪岭", position: "进口", mileage: "K12+723", lng: 119.807765, lat: 29.738546, elevation: 317.8, workshop: "横店维修车间", year: "2026", url: "https://www.720yun.com/t/13akuy17df7?scene_id=129907471" },
     { id: 4, line: "杭温铁路", tunnelNum: 3, tunnelName: "木匪岭", position: "出口", mileage: "K22+964", lng: 119.863177, lat: 29.659327, elevation: 442.6, workshop: "横店维修车间", year: "2026", url: "https://www.720yun.com/t/13akuy17df7?scene_id=129907472" },
     { id: 5, line: "杭温铁路", tunnelNum: 4, tunnelName: "金竹坪", position: "进口", mileage: "K23+100", lng: 119.863556, lat: 29.658666, elevation: 443.2, workshop: "横店维修车间", year: "2026", url: "https://www.720yun.com/t/13akuy17df7?scene_id=129907473" },
     { id: 6, line: "杭温铁路", tunnelNum: 4, tunnelName: "金竹坪", position: "出口", mileage: "K24+441", lng: 119.87042, lat: 29.647733, elevation: 422.4, workshop: "横店维修车间", year: "2026", url: "https://www.720yun.com/t/13akuy17df7?scene_id=129907474" },
