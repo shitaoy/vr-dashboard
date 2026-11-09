@@ -21,6 +21,7 @@
         allWorks: VR_DATA.works,
         lineColors: {},             // 线路名 -> 颜色
         mapZoom: 8,                 // 当前地图缩放级别（Leaflet 层级）
+        hasLocalDevice: false,      // 是否加载了本地设备数据（data.local.js）
         currentDeviceWork: null     // 设备抽屉当前展示的隧道口
     };
 
@@ -1272,10 +1273,36 @@
     }
 
     // ===== 初始化 =====
+    // ===== 合并本地设备数据（js/data.local.js，仅本地存在，不上传 GitHub） =====
+    // 键：线名|隧道号|位置，与 sync_tencent_docs.py 生成规则一致
+    function deviceKey(w) {
+        return w.line + "|" + w.tunnelNum + "|" + w.position;
+    }
+
+    function mergeLocalDevice() {
+        var local = window.VR_DEVICE;
+        if (!local) {
+            STATE.hasLocalDevice = false;
+            return 0;
+        }
+        var n = 0;
+        STATE.allWorks.forEach(function (w) {
+            var dev = local[deviceKey(w)];
+            if (dev) {
+                w.device = dev;
+                n++;
+            }
+        });
+        STATE.hasLocalDevice = n > 0;
+        console.log("[设备数据] 已合并本地设备情况：" + n + " 个隧道口");
+        return n;
+    }
+
     async function init() {
         var loading = document.getElementById("loading-overlay");
 
         try {
+            mergeLocalDevice();
             adjustScale();
             startClock();
             renderStats();
